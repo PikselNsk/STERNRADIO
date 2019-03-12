@@ -1,9 +1,11 @@
 package info.javaway.sternradio;
 
 
+import android.Manifest;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -17,6 +19,8 @@ import android.util.TypedValue;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -31,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.lang.ref.WeakReference;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -47,9 +52,10 @@ public class Utils {
     private static int cardColor;
     private static int textColor;
     private static int favoritePick;
+    private static WeakReference<AppCompatActivity> weakActivity;
 
 
-    public static void simpleLog(String message){
+    public static void simpleLog(String message) {
         Log.wtf("info.javaway.sternradio", message);
     }
 
@@ -111,7 +117,6 @@ public class Utils {
     }
 
 
-
     public static void sendToast(String text) {
         Toast.makeText(App.getContext(), text, Toast.LENGTH_SHORT).show();
     }
@@ -132,13 +137,12 @@ public class Utils {
     }
 
 
-
     public static void saveLog(String logMessage) {
 // TODO: 27.01.2019 раскомментировать для дебага
         Runnable runnable = () -> {
             String dataDir = App.getContext().getApplicationInfo().dataDir;
-            File path = new File("sdcard/blocknote_log/");
-            File logFile = new File("sdcard/blocknote_log/note_log.txt");
+            File path = new File("sdcard/sternradio_log/");
+            File logFile = new File("sdcard/sternradio_log/sternradio_log.txt");
 
             if (!logFile.exists()) {
                 try {
@@ -200,7 +204,6 @@ public class Utils {
     }
 
 
-
     public static void searchDataBaseFuckingCordova(File file) {
         File[] files = file.listFiles();
         if (files == null) {
@@ -244,13 +247,12 @@ public class Utils {
             Intent emailIntent = new Intent(Intent.ACTION_SEND);
             emailIntent.setType("message/rfc822");
 //                    emailIntent.putExtra(Intent.EXTRA_STREAM, path); // Include  the path
-            emailIntent.putExtra(Intent.EXTRA_SUBJECT, "My Notebook Error");
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, "STERNRADIO ERROR");
             emailIntent.putExtra(Intent.EXTRA_TEXT, content);
             emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{"goodalarmclock@gmail.com"});
             App.getContext().startActivity(Intent.createChooser(emailIntent, "Send email"));
         }
     }
-
 
 
     public static void copy(File src, File dst) throws IOException {
@@ -265,14 +267,48 @@ public class Utils {
                 out.flush();
                 in.close();
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             Utils.saveLog("Error copy backup \n");
             Utils.saveLog(e.getMessage());
         }
     }
 
     public static boolean getNetworkState() {
-        // TODO: 26.02.2019 добавить проверку доступности сетиэ
-        return true;
+        ConnectivityManager cm =
+                (ConnectivityManager) App.get().getSystemService(AppCompatActivity.CONNECTIVITY_SERVICE);
+        boolean isNetworkAvailable = cm.getActiveNetworkInfo() != null;
+
+        return isNetworkAvailable &&
+                cm.getActiveNetworkInfo().isConnected();
+    }
+
+    public static void setAppCompatActivity(AppCompatActivity activity) {
+        weakActivity = new WeakReference<>(activity);
+    }
+
+    public static void clearAppCompatActivity() {
+        weakActivity.clear();
+    }
+
+    public static void checkPermissions(AppCompatActivity activity) {
+        boolean b1 = (ContextCompat.checkSelfPermission(App.getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED);
+        boolean b2 = (ContextCompat.checkSelfPermission(App.getContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED);
+        if (!(b1 && b2)) {
+            ActivityCompat.requestPermissions(
+                    activity,
+                    new String[]{
+                            Manifest.permission.READ_EXTERNAL_STORAGE,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                            Manifest.permission.RECORD_AUDIO,
+                            Manifest.permission.ACCESS_NETWORK_STATE},
+                    2121);
+        } else {
+        }
+    }
+
+    public static void clearTempFolder() {
+
     }
 }

@@ -1,16 +1,18 @@
-package info.javaway.sternradio;
+package info.javaway.sternradio.view;
 
 import android.Manifest;
+import android.app.Service;
+import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.media.MediaPlayer;
 import android.os.Bundle;
 
+import com.gauravk.audiovisualizer.visualizer.BarVisualizer;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import android.view.View;
 
 import com.google.android.material.navigation.NavigationView;
-import com.google.common.io.Files;
+import com.wang.avi.AVLoadingIndicatorView;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -19,95 +21,62 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import info.javaway.sternradio.model.ContainerTracks;
+import info.javaway.sternradio.R;
+import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.model.Track;
 import info.javaway.sternradio.presenter.RootPresenter;
-import info.javaway.sternradio.retrofit.DownloadTrackController;
-import info.javaway.sternradio.retrofit.RadioApi;
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
+import info.javaway.sternradio.service.MusicService;
 
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 public class RootActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+RootPresenter.View{
 
     private static RootPresenter presenter;
+    BarVisualizer barVisualizer;
+    private Toolbar toolbar;
+    private TextView trackNameTv;
+    private TextView nextTrackNameTv;
+    private AVLoadingIndicatorView avi;
+    private ImageView playButtonIv;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        Utils.simpleLog("RootActivity onCreate Thread name : " + Thread.currentThread().getName());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Utils.setAppCompatActivity(this);
+        toolbar = findViewById(R.id.toolbar);
+        trackNameTv = findViewById(R.id.track_name_tv);
+        nextTrackNameTv = findViewById(R.id.next_track_tv);
+        barVisualizer = findViewById(R.id.bar_visualiser);
+        playButtonIv = findViewById(R.id.play_btn_iv);
+        avi = findViewById(R.id.avi);
         setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+
+
         presenter = RootPresenter.getInstance();
+        presenter.takeView(this);
 
-        ImageView getListTrackTv = findViewById(R.id.get_files_tv);
-        getListTrackTv.setOnClickListener(v -> {
-            presenter.clickOnPlay();
-        });
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//
+//            }
+//        });
+        playButtonIv.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                RadioApi radioApi = DownloadTrackController.getApi();
-                Call<ResponseBody> call = radioApi.apiDownloadTrack(5);
-                call.enqueue(new Callback<ResponseBody>() {
-
-                    @Override
-                    public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                        Thread t1 = new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                File file = new File(getApplicationInfo().dataDir + "/track");
-                                try {
-                                    file.createNewFile();
-                                    Files.asByteSink(file).write(response.body().bytes());
-                                    MediaPlayer player = new MediaPlayer();
-                                    player.setDataSource(file.getPath());
-                                    player.prepare();
-                                    player.start();
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-                        t1.start();
-
-                    }
-
-                    @Override
-                    public void onFailure(Call<ResponseBody> call, Throwable t) {
-
-                    }
-                });
+            public void onClick(View v) {
+                presenter.clickOnPlayButton();
             }
         });
-
-        boolean b1 = (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED);
-        boolean b2 = (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.READ_EXTERNAL_STORAGE)
-                == PackageManager.PERMISSION_GRANTED);
-        if (!(b1 && b2)) {
-            ActivityCompat.requestPermissions(
-                    RootActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    2121);
-        } else {
-        }
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -116,6 +85,14 @@ public class RootActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (barVisualizer != null)
+            barVisualizer.release();
+        presenter.dropView();
     }
 
     @Override
@@ -174,4 +151,57 @@ public class RootActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    @Override
+    public void showError(String messageError) {
+        trackNameTv.setText(getString(R.string.network_error));
+    }
+
+    @Override
+    public void showMessage(String message) {
+
+    }
+
+    @Override
+    public void showLoading() {
+        avi.show();
+        trackNameTv.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void hideLoading() {
+        avi.hide();
+        trackNameTv.setVisibility(View.VISIBLE);
+
+    }
+
+    @Override
+    public void setTrackInfo(String trackName) {
+        trackNameTv.setText(trackName);
+    }
+
+    @Override
+    public void setNextTrackInfo(String trackName){
+        nextTrackNameTv.setText(trackName);
+    }
+
+    @Override
+    public void initialVisualBar() {
+        int audioSessionId = presenter.getMediaPlayer().getAudioSessionId();
+        if (audioSessionId != -1) {
+            barVisualizer.setAudioSessionId(audioSessionId);
+        }
+    }
+
+    @Override
+    public void showPlayButton() {
+        playButtonIv.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.play));
+    }
+
+    @Override
+    public void showPauseButton() {
+        playButtonIv.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pause));
+
+    }
+
 }

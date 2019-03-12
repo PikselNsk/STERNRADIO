@@ -1,24 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    app:layout_behavior="@string/appbar_scrolling_view_behavior"
-    tools:context=".RootActivity"
-    android:background="@color/colorPrimaryDark"
+    android:background="@color/colorBackground"
     tools:showIn="@layout/app_bar_main">
 
+    <com.gauravk.audiovisualizer.visualizer.BarVisualizer
+        android:id="@+id/bar_visualiser"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/logo_iv"
+        android:layout_above="@+id/info_tracks_container"
+        android:background="@color/colorBackground"
+        app:avColor="@color/colorVisualBar"
+        app:avDensity="0.8"
+        app:avSpeed="medium"
+        app:avType="fill"
+        app:avGravity="bottom"
+        />
+
+
+
     <ImageView
-        android:id="@+id/get_files_tv"
-        android:src="@drawable/logo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:id="@+id/logo_iv"
+        android:layout_width="120dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="60dp"
+        android:layout_marginLeft="@dimen/default_margin"
+        android:src="@drawable/radio_logo"
+        />
+
+    <com.wang.avi.AVLoadingIndicatorView
+        android:id="@+id/avi"
+        style="@style/AVLoadingIndicatorView"
+        android:layout_width="250dp"
+        android:layout_height="250dp"
+        android:visibility="visible"
+        android:layout_centerInParent="true"
+        android:layout_below="@id/logo_iv"
+        android:layout_marginTop="@dimen/default_margin"
+
+        app:indicatorColor="@color/colorAccent"
+        app:indicatorName="LineScalePulseOutRapidIndicator" />
 
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+
+    <LinearLayout
+        android:id="@+id/info_tracks_container"
+android:layout_above="@id/play_btn_iv"
+        android:padding="@dimen/default_margin"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_margin="@dimen/default_margin"
+                android:id="@+id/track_name_tv"
+                android:textColor="@color/colorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/colorText"/>
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:layout_margin="@dimen/default_margin"
+                android:id="@+id/next_track_tv"
+                android:textColor="@color/colorText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/play_btn_iv"
+        android:src="@drawable/play"
+        android:layout_centerInParent="true"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="@dimen/default_margin"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:clickable="true"/>
+
+
+</RelativeLayout>
