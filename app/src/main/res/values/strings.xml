@@ -6,4 +6,10 @@
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
+    <string name="network_error">Network error. Restore network and restart station!</string>
+    <string name="actual_track_info">В эфире:\n%s</string>
+    <string name="next_track_info">Следующий:\n%s</string>
+    <string name="buffering">Буферизация...</string>
+    <string name="permission_info">Для корректной работы радио необходимо выдать разрешения. Доступ к файлам нужен для буферизации аудиопотока. Доступ к звонкам необходим для того, что бы во время входящего звонка радио отключалось. Для продолжения нажмите кнопку Выдать разрешения.</string>
+    <string name="granted_permissions">Выдать разрешения</string>
 </resources>

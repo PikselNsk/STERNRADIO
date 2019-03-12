@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorBackground">
+
+    <ImageView
+        android:id="@+id/logo_iv"
+        android:layout_margin="20dp"
+        android:src="@drawable/radio_logo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/info_text"/>
+
+    <TextView
+        android:id="@+id/info_text"
+        android:text="@string/permission_info"
+        android:textColor="@color/colorText"
+        android:textSize="18sp"
+        android:layout_centerInParent="true"
+        android:layout_margin="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:id="@+id/granted_perm_btn"
+        android:layout_below="@id/info_text"
+        android:layout_centerInParent="true"
+        android:text="@string/granted_permissions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+
+</RelativeLayout>
