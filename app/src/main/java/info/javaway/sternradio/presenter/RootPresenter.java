@@ -12,13 +12,14 @@ import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.handler.MusicHandler;
 import info.javaway.sternradio.service.MusicService;
+import info.javaway.sternradio.service.MusicServiceStream;
 
 public class RootPresenter implements MusicHandler.ChangeStateTrackListener, ServiceConnection {
 
     private static RootPresenter instance;
 
     private View view;
-    private MusicService musicService;
+    private MusicServiceStream musicService;
     private boolean mBound;
     private String nameOfNextTrack;
 
@@ -30,14 +31,13 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
     }
 
     public RootPresenter() {
+        Intent service = new Intent(App.getContext(), MusicServiceStream.class);
+        service.setAction(MusicServiceStream.ACTION_PLAY);
+        App.getContext().startService(service);
         App.getContext().bindService(
-                new Intent(App.getContext(), MusicService.class),
+                service,
                 this,
                 Service.BIND_AUTO_CREATE);
-    }
-
-    public void clickOnPlay() {
-        musicService.playLastTrack();
     }
 
     public void takeView(View view) {
@@ -70,7 +70,7 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
 
             view.initialVisualBar();
 
-            if (musicService.getState() == MusicHandler.STATE.PLAY){
+            if (musicService.isPlaying()){
                 view.hideLoading();
             }
         }
@@ -117,7 +117,7 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
 
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+        MusicServiceStream.MediaPlayerBinder binder = (MusicServiceStream.MediaPlayerBinder) service;
         musicService = binder.getService();
         musicService.registerChangeTrackListener(this);
         musicService.initPlayer();
@@ -137,10 +137,10 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
 
     public void clickOnPlayButton() {
         if (!musicService.playerIsPlay()){
-            musicService.playFuckingMusic();
+//            musicService.playFuckingMusic();
             view.showPlayButton();
         } else {
-            musicService.stopFuckingMusic();
+//            musicService.stopFuckingMusic();
             view.showPauseButton();
         }
     }

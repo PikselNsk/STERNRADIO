@@ -36,6 +36,8 @@ public class RootActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
 RootPresenter.View{
 
+    public static final String UPDATE_PLAYER = "UPDATE_PLAYER";
+    public static final String BUFFERING = "BUFFERING";
     private static RootPresenter presenter;
     BarVisualizer barVisualizer;
     private Toolbar toolbar;

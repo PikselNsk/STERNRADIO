@@ -18,6 +18,7 @@ import org.acra.data.StringFormat;
 
 import androidx.multidex.MultiDex;
 import info.javaway.sternradio.service.MusicService;
+import info.javaway.sternradio.service.MusicServiceStream;
 import info.javaway.sternradio.service.NetworkChangerReceiver;
 
 public class App extends Application {
@@ -25,7 +26,7 @@ public class App extends Application {
     private static Context context;
     private static App instance;
     private NetworkChangerReceiver networkStateChangeReceiver;
-    private static MusicService musicService;
+    private static MusicServiceStream musicService;
     private boolean mBound;
 
     public App() {
@@ -46,7 +47,7 @@ public class App extends Application {
         super.attachBaseContext(base);
         networkStateChangeReceiver = NetworkChangerReceiver.getInstance(this);
         registerReceiver(networkStateChangeReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
-        bindService(new Intent(this, MusicService.class), mConnection, Service.BIND_AUTO_CREATE);
+        bindService(new Intent(this, MusicServiceStream.class), mConnection, Service.BIND_AUTO_CREATE);
         MultiDex.install(this);
 
         CoreConfigurationBuilder builder = new CoreConfigurationBuilder(this);
@@ -86,7 +87,7 @@ public class App extends Application {
 
     }
 
-    public static MusicService getMusicService() {
+    public static MusicServiceStream getMusicService() {
         return musicService;
     }
 
@@ -96,7 +97,7 @@ public class App extends Application {
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            MusicService.MusicBinder binder = (MusicService.MusicBinder) service;
+            MusicServiceStream.MediaPlayerBinder binder = (MusicServiceStream.MediaPlayerBinder) service;
             musicService = binder.getService();
             mBound = true;
         }

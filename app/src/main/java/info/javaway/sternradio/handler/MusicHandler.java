@@ -40,7 +40,6 @@ public class MusicHandler {
     private PhoneStateListener phoneStateListener;
 
 
-
     public MusicHandler() {
         Utils.saveLog("MusicHandler constructor Thread name : " + Thread.currentThread().getName());
         trackLoader = new TrackLoader();
@@ -92,17 +91,17 @@ public class MusicHandler {
         setPhoneListener();
     }
 
-    private void setPhoneListener(){
+    private void setPhoneListener() {
         phoneStateListener = new PhoneStateListener() {
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
                 if (state == TelephonyManager.CALL_STATE_RINGING) {
                     //Incoming call: Pause music
                     mute(true);
-                } else if(state == TelephonyManager.CALL_STATE_IDLE) {
+                } else if (state == TelephonyManager.CALL_STATE_IDLE) {
                     //Not in call: Play music
                     mute(false);
-                } else if(state == TelephonyManager.CALL_STATE_OFFHOOK) {
+                } else if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
                     //A call is dialing, active or on hold
                     mute(true);
                 }
@@ -110,7 +109,7 @@ public class MusicHandler {
             }
         };
         TelephonyManager mgr = (TelephonyManager) App.get().getSystemService(Context.TELEPHONY_SERVICE);
-        if(mgr != null) {
+        if (mgr != null) {
             mgr.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
         }
     }
@@ -118,7 +117,7 @@ public class MusicHandler {
     public void mute(boolean b) {
 
         AudioManager am = (AudioManager) App.get().getSystemService(Context.AUDIO_SERVICE);
-        if(b) {
+        if (b) {
             am.setStreamMute(AudioManager.STREAM_MUSIC, true);
         } else {
             am.setStreamMute(AudioManager.STREAM_MUSIC, false);
@@ -369,7 +368,7 @@ public class MusicHandler {
         }
     }
 
-    public boolean playerIsPause(){
+    public boolean playerIsPause() {
         return firstPlayer.isPlaying();
     }
 
