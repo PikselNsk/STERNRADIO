@@ -2,7 +2,10 @@ package info.javaway.sternradio.view;
 
 import android.Manifest;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 
@@ -14,18 +17,16 @@ import android.view.View;
 import com.google.android.material.navigation.NavigationView;
 import com.wang.avi.AVLoadingIndicatorView;
 
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
-import info.javaway.sternradio.model.Track;
 import info.javaway.sternradio.presenter.RootPresenter;
-import info.javaway.sternradio.service.MusicService;
 
 import android.view.Menu;
 import android.view.MenuItem;
@@ -36,8 +37,8 @@ public class RootActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
 RootPresenter.View{
 
-    public static final String UPDATE_PLAYER = "UPDATE_PLAYER";
-    public static final String BUFFERING = "BUFFERING";
+    public static final String UPDATE_PLAYER = "info.javaway.sternradio.UPDATE_PLAYER";
+    public static final String BUFFERING = "info.javaway.sternradio.BUFFERING";
     private static RootPresenter presenter;
     BarVisualizer barVisualizer;
     private Toolbar toolbar;
@@ -45,6 +46,7 @@ RootPresenter.View{
     private TextView nextTrackNameTv;
     private AVLoadingIndicatorView avi;
     private ImageView playButtonIv;
+    private PlayerChangerReceiver playerStateChangeReceiver;
 
 
     @Override
@@ -90,11 +92,24 @@ RootPresenter.View{
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        playerStateChangeReceiver = new PlayerChangerReceiver();
+        IntentFilter playerFilter = new IntentFilter();
+        playerFilter.addAction(BUFFERING);
+        playerFilter.addAction(UPDATE_PLAYER);
+        registerReceiver(playerStateChangeReceiver,
+                playerFilter);
+
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (barVisualizer != null)
             barVisualizer.release();
         presenter.dropView();
+        unregisterReceiver(playerStateChangeReceiver);
     }
 
     @Override
@@ -204,6 +219,27 @@ RootPresenter.View{
     public void showPauseButton() {
         playButtonIv.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pause));
 
+    }
+
+
+
+    class PlayerChangerReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            switch (intent.getAction()){
+                case BUFFERING:{
+                    showLoading();
+                    break;
+                }
+                case UPDATE_PLAYER:{
+                    hideLoading();
+                    break;
+                }
+            }
+            Utils.simpleLog("player change " + intent.getAction());
+//        MusicHandler.getInstance().notifyAboutNetworkState();
+        }
     }
 
 }

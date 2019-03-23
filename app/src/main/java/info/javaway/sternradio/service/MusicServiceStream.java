@@ -6,17 +6,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
-import android.net.wifi.WifiManager;
+import android.media.SubtitleData;
+import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
-import android.os.PowerManager;
 import android.util.Log;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
-import java.util.Queue;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -35,33 +35,35 @@ public class MusicServiceStream extends Service
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnErrorListener,
         MediaPlayer.OnBufferingUpdateListener,
-        MediaPlayer.OnInfoListener {
+        MediaPlayer.OnInfoListener, MediaPlayer.OnSubtitleDataListener, MediaPlayer.OnCompletionListener {
 
     private static final String TAG = MusicServiceStream.class.getSimpleName();
 
     private final IBinder mMediaPlayerBinder = new MediaPlayerBinder();
-    public static final String ACTION_PLAY = "creek.fm.doublea.kzfr.services.PLAY";
-    public static final String ACTION_PAUSE = "creek.fm.doublea.kzfr.services.PAUSE";
-    private static final String ACTION_CLOSE = "creek.fm.doublea.kzfr.services.APP_CLOSE";
-    public static final String ACTION_CLOSE_IF_PAUSED = "creek.fm.doublea.kzfr.services.APP_CLOSE_IF_PAUSED";
+    public static final String ACTION_PLAY = "info.javaway.sternradio.PLAY";
+    public static final String ACTION_PAUSE = "info.javaway.sternradio.PAUSE";
+    private static final String ACTION_CLOSE = "info.javaway.sternradio.APP_CLOSE";
+    public static final String ACTION_CLOSE_IF_PAUSED = "info.javaway.sternradio.services.APP_CLOSE_IF_PAUSED";
     private static final int NOTIFICATION_ID = 4223;
     private MediaPlayer mMediaPlayer = new MediaPlayer();
     private AudioManager mAudioManager = null;
 
-    //The URL that feeds the KZFR stream.
     private static final String mStreamUrl = "https://a1.radioheart.ru:9011/RH6977";
 
-    //Wifi Lock to ensure the wifo does not ge to sleep while we are stearming music.
-    private WifiManager.WifiLock mWifiLock;
-    private ArrayList<MusicHandler.ChangeStateTrackListener> changeStateTrackListeners = new ArrayList<>();
+    //Wifi Lock to ensure the wifi does not ge to sleep while we are stearming music.
+//    private WifiManager.WifiLock mWifiLock;
+    private ArrayList<MusicStreamHandler.ChangeStateTrackListener> changeStateTrackListeners = new ArrayList<>();
+    private String currentTrackName = "not implementation";
+    private State mState = State.Stopped;
+    private AudioFocus mAudioFocus = AudioFocus.NoFocusNoDuck;
+
 
     public boolean playerIsPlay() {
         return mState == State.Playeng;
     }
 
     public String getPlayingTrack() {
-
-        return "not implementation";
+        return currentTrackName;
     }
 
     public MediaPlayer getMediaPlayer() {
@@ -72,28 +74,10 @@ public class MusicServiceStream extends Service
 
     }
 
-    enum State {
-        Retrieving, // the MediaRetriever is retrieving music
-        Stopped,  //Media player is stopped and not prepared to play
-        Preparing, // Media player is preparing to play
-        Playeng,  // MediaPlayer playback is active.
-        // There is a chance that the MP is actually paused here if we do not have audio focus.
-        // We stay in this state so we know to resume when we gain audio focus again.
-        Paused // Audio Playback is paused
-    }
-
-    private State mState = State.Stopped;
-
-    enum AudioFocus {
-        NoFocusNoDuck, // service does not have audio focus and cannot duck
-        NoFocusCanDuck, // we don't have focus but we can play at low volume ("ducking")
-        Focused  // media player has full audio focus
-    }
-
-    private AudioFocus mAudioFocus = AudioFocus.NoFocusNoDuck;
 
     @Override
     public void onAudioFocusChange(int focusChange) {
+        Utils.simpleLog(TAG + " onAudioFocusChange " + focusChange);
         switch (focusChange) {
             case AudioManager.AUDIOFOCUS_GAIN:
                 mAudioFocus = AudioFocus.Focused;
@@ -107,6 +91,7 @@ public class MusicServiceStream extends Service
             case AudioManager.AUDIOFOCUS_LOSS:
                 mAudioFocus = AudioFocus.NoFocusNoDuck;
                 // Lost focus for an unbounded amount of time: stop playback and release media player
+
                 stopMediaPlayer();
                 break;
 
@@ -130,17 +115,20 @@ public class MusicServiceStream extends Service
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        startMediaPlayer();
+//        Utils.simpleLog(TAG + " onError " + what);
+//        startMediaPlayer();
         return true;
     }
 
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
-
+        Utils.simpleLog(TAG + " onBufferingUpdate");
     }
 
     @Override
     public boolean onInfo(MediaPlayer mp, int what, int extra) {
+        Utils.simpleLog(TAG + " onInfo " + extra);
+
         return false;
     }
 
@@ -152,31 +140,33 @@ public class MusicServiceStream extends Service
     }
 
     private void setupWifiLock() {
-        if (mWifiLock == null) {
-            mWifiLock = ((WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE))
-                    .createWifiLock(WifiManager.WIFI_MODE_FULL, "mediaplayerlock");
-        }
+//        if (mWifiLock == null) {
+//            mWifiLock = ((WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE))
+//                    .createWifiLock(WifiManager.WIFI_MODE_FULL, "mediaplayerlock");
+//        }
     }
 
     private void setupMediaPlayer() {
 
-            mMediaPlayer.setOnPreparedListener(this);
-            mMediaPlayer.setOnErrorListener(this);
-            mMediaPlayer.setOnBufferingUpdateListener(this);
-            mMediaPlayer.setOnInfoListener(this);
+        mMediaPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnErrorListener(this);
+        mMediaPlayer.setOnBufferingUpdateListener(this);
+        mMediaPlayer.setOnInfoListener(this);
+        mMediaPlayer.setOnSubtitleDataListener(this);
+        mMediaPlayer.setOnCompletionListener(this);
 //            mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
-            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
-            try {
-                mMediaPlayer.setDataSource( mStreamUrl);
-            } catch (IOException e) {
-                e.printStackTrace();
-                stopSelf();
-            }
+        mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        try {
+            mMediaPlayer.setDataSource(mStreamUrl);
+        } catch (IOException e) {
+            e.printStackTrace();
+            stopSelf();
+        }
 
     }
 
     /**
-     * The radio streaming service runs in forground mode to keep the Android OS from killing it.
+     * The radio streaming service runs in foreground mode to keep the Android OS from killing it.
      * The OnStartCommand is called every time there is a call to start service and the service is
      * already started. By Passing an intent to the onStartCommand we can play and pause the music.
      */
@@ -231,6 +221,7 @@ public class MusicServiceStream extends Service
     private void configAndPrepareMediaPlayer() {
         initMediaPlayer();
         mState = State.Preparing;
+        // TODO: 23.03.2019 отправить нотификацию
 //        buildNotification(true);
         mMediaPlayer.prepareAsync();
 
@@ -256,6 +247,7 @@ public class MusicServiceStream extends Service
             sendUpdatePlayerIntent();
             mState = State.Playeng;
 //            buildNotification(false);
+            new AsyncHeaderParcer().execute();
         }
     }
 
@@ -289,6 +281,7 @@ public class MusicServiceStream extends Service
      * audio focus.
      */
     private void stopMediaPlayer() {
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "stopMediaPlayer");
         // Lost focus for an unbounded amount of time: stop playback and release media player
         if (mMediaPlayer != null) {
             if (mMediaPlayer.isPlaying()) mMediaPlayer.stop();
@@ -313,6 +306,7 @@ public class MusicServiceStream extends Service
 
     //send an intent telling any activity listening to this intent that the media player is buffering.
     private void sendBufferingIntent() {
+        Utils.simpleLog(TAG + " sendBufferingIntent");
         Intent bufferingPlayerIntent = new Intent(RootActivity.BUFFERING);
         LocalBroadcastManager.getInstance(this).sendBroadcast(bufferingPlayerIntent);
     }
@@ -388,9 +382,9 @@ public class MusicServiceStream extends Service
     private void relaxResources() {
 
         //Release the WifiLock resource
-        if (mWifiLock != null && mWifiLock.isHeld()) {
-            mWifiLock.release();
-        }
+//        if (mWifiLock != null && mWifiLock.isHeld()) {
+//            mWifiLock.release();
+//        }
 
 
         // stop service from being a foreground service. Passing true removes the notification as well.
@@ -415,6 +409,23 @@ public class MusicServiceStream extends Service
         return mMediaPlayer != null && mMediaPlayer.isPlaying();
     }
 
+    public void restoreNetwork() {
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "restoreNetwork");
+        mMediaPlayer.stop();
+        mMediaPlayer.reset();
+        configAndPrepareMediaPlayer();
+    }
+
+    @Override
+    public void onSubtitleData(@NonNull MediaPlayer mp, @NonNull SubtitleData data) {
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onSubtitleData");
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        Utils.simpleLog(TAG + " onCompletion");
+    }
+
     public class MediaPlayerBinder extends Binder {
 
         public MusicServiceStream getService() {
@@ -422,11 +433,55 @@ public class MusicServiceStream extends Service
         }
     }
 
-    public void registerChangeTrackListener(MusicHandler.ChangeStateTrackListener listener){
+    public void registerChangeTrackListener(MusicStreamHandler.ChangeStateTrackListener listener) {
         changeStateTrackListeners.add(listener);
     }
 
-    public void unregisterChangeTrackListener(MusicHandler.ChangeStateTrackListener listener){
+    public void unregisterChangeTrackListener(MusicStreamHandler.ChangeStateTrackListener listener) {
         changeStateTrackListeners.remove(listener);
+    }
+
+    enum State {
+        Retrieving, // the MediaRetriever is retrieving music
+        Stopped,  //Media player is stopped and not prepared to play
+        Preparing, // Media player is preparing to play
+        Playeng,  // MediaPlayer playback is active.
+        // There is a chance that the MP is actually paused here if we do not have audio focus.
+        // We stay in this state so we know to resume when we gain audio focus again.
+        Paused // Audio Playback is paused
+    }
+
+    enum AudioFocus {
+        NoFocusNoDuck, // service does not have audio focus and cannot duck
+        NoFocusCanDuck, // we don't have focus but we can play at low volume ("ducking")
+        Focused  // media player has full audio focus
+    }
+
+    public class AsyncHeaderParcer extends AsyncTask<Void, Void, Void> {
+
+        private ParsingHeaderData.TrackData trackData;
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+                URL url = new URL(
+                        mStreamUrl);
+                ParsingHeaderData streaming = new ParsingHeaderData();
+                trackData = streaming.getTrackDetails(url);
+                Log.e("Song Artist Name ", trackData.artist);
+                Log.e("Song Artist Title", trackData.title);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            for (MusicStreamHandler.ChangeStateTrackListener listener : changeStateTrackListeners){
+                listener.updatePlayingTrack(trackData.artist + " " + trackData.title);
+            }
+        }
     }
 }

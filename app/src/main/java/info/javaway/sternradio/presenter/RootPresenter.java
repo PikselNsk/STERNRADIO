@@ -11,10 +11,11 @@ import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.handler.MusicHandler;
+import info.javaway.sternradio.handler.MusicStreamHandler;
 import info.javaway.sternradio.service.MusicService;
 import info.javaway.sternradio.service.MusicServiceStream;
 
-public class RootPresenter implements MusicHandler.ChangeStateTrackListener, ServiceConnection {
+public class RootPresenter implements MusicHandler.ChangeStateTrackListener, ServiceConnection, MusicStreamHandler.ChangeStateTrackListener {
 
     private static RootPresenter instance;
 
@@ -44,7 +45,7 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
         this.view = view;
         if(musicService == null) {
             if (Utils.getNetworkState()) {
-                view.setTrackInfo("Подождите, я зову диджеев...");
+                view.setTrackInfo("Буферизация...");
             } else {
                 view.showError(App.getContext().getString(R.string.network_error));
             }
@@ -91,7 +92,7 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
     public void updatePlayingTrack(String playingTrack) {
         String trackInfo = String.format(
                 App.getContext().getString(R.string.actual_track_info),
-                musicService.getPlayingTrack());
+                playingTrack);
         view.setTrackInfo(trackInfo);
         view.hideLoading();
     }
@@ -142,6 +143,12 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
         } else {
 //            musicService.stopFuckingMusic();
             view.showPauseButton();
+        }
+    }
+
+    public void restoreNetwork() {
+        if (musicService!= null) {
+            musicService.restoreNetwork();
         }
     }
 

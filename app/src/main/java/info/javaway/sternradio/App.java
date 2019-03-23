@@ -2,6 +2,7 @@ package info.javaway.sternradio;
 
 import android.app.Application;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -17,9 +18,7 @@ import org.acra.config.CoreConfigurationBuilder;
 import org.acra.data.StringFormat;
 
 import androidx.multidex.MultiDex;
-import info.javaway.sternradio.service.MusicService;
 import info.javaway.sternradio.service.MusicServiceStream;
-import info.javaway.sternradio.service.NetworkChangerReceiver;
 
 public class App extends Application {
 
@@ -45,7 +44,7 @@ public class App extends Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
-        networkStateChangeReceiver = NetworkChangerReceiver.getInstance(this);
+        networkStateChangeReceiver = new NetworkChangerReceiver();
         registerReceiver(networkStateChangeReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
         bindService(new Intent(this, MusicServiceStream.class), mConnection, Service.BIND_AUTO_CREATE);
         MultiDex.install(this);
@@ -107,5 +106,13 @@ public class App extends Application {
             mBound = false;
         }
     };
+
+    class NetworkChangerReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(final Context context, final Intent intent) {
+            Utils.simpleLog("network change");
+            if (musicService!=null) musicService.restoreNetwork();
+        }
+    }
 
 }
