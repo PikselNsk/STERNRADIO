@@ -9,7 +9,13 @@ import android.media.MediaPlayer;
 import android.media.SubtitleData;
 import android.os.AsyncTask;
 import android.os.Binder;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
+import android.os.SystemClock;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.IOException;
@@ -20,10 +26,10 @@ import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
-import info.javaway.sternradio.handler.MusicHandler;
-import info.javaway.sternradio.handler.MusicStreamHandler;
+import info.javaway.sternradio.handler.MusicInfoHelper;
 import info.javaway.sternradio.view.RootActivity;
 
 /**
@@ -42,6 +48,7 @@ public class MusicServiceStream extends Service
     private final IBinder mMediaPlayerBinder = new MediaPlayerBinder();
     public static final String ACTION_PLAY = "info.javaway.sternradio.PLAY";
     public static final String ACTION_PAUSE = "info.javaway.sternradio.PAUSE";
+    public static final String ACTION_PAUSE_CANCEL = "info.javaway.sternradio.ACTION_PAUSE_CANCEL";
     private static final String ACTION_CLOSE = "info.javaway.sternradio.APP_CLOSE";
     public static final String ACTION_CLOSE_IF_PAUSED = "info.javaway.sternradio.services.APP_CLOSE_IF_PAUSED";
     private static final int NOTIFICATION_ID = 4223;
@@ -52,7 +59,7 @@ public class MusicServiceStream extends Service
 
     //Wifi Lock to ensure the wifi does not ge to sleep while we are stearming music.
 //    private WifiManager.WifiLock mWifiLock;
-    private ArrayList<MusicStreamHandler.ChangeStateTrackListener> changeStateTrackListeners = new ArrayList<>();
+    private ArrayList<MusicInfoHelper.ChangeStateTrackListener> changeStateTrackListeners = new ArrayList<>();
     private String currentTrackName = "not implementation";
     private State mState = State.Stopped;
     private AudioFocus mAudioFocus = AudioFocus.NoFocusNoDuck;
@@ -109,6 +116,8 @@ public class MusicServiceStream extends Service
                 // at an attenuated level
                 if (mMediaPlayer.isPlaying()) mMediaPlayer.setVolume(0.1f, 0.1f);
                 break;
+
+
         }
     }
 
@@ -165,6 +174,29 @@ public class MusicServiceStream extends Service
 
     }
 
+    private void setPhoneListener() {
+        PhoneStateListener phoneStateListener = new PhoneStateListener() {
+            @Override
+            public void onCallStateChanged(int state, String incomingNumber) {
+                if (state == TelephonyManager.CALL_STATE_RINGING) {
+                    //Incoming call: Pause music
+                    mute(true);
+                } else if (state == TelephonyManager.CALL_STATE_IDLE) {
+                    //Not in call: Play music
+                    mute(false);
+                } else if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
+                    //A call is dialing, active or on hold
+                    mute(true);
+                }
+                super.onCallStateChanged(state, incomingNumber);
+            }
+        };
+        TelephonyManager mgr = (TelephonyManager) App.get().getSystemService(Context.TELEPHONY_SERVICE);
+        if (mgr != null) {
+            mgr.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+        }
+    }
+
     /**
      * The radio streaming service runs in foreground mode to keep the Android OS from killing it.
      * The OnStartCommand is called every time there is a call to start service and the service is
@@ -172,7 +204,7 @@ public class MusicServiceStream extends Service
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Utils.simpleLog(TAG + " " + " onStartCommand");
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onStartCommand " + intent.getAction());
         String action = null;
         if (intent != null) {
             action = intent.getAction();
@@ -191,8 +223,15 @@ public class MusicServiceStream extends Service
                 case ACTION_CLOSE:
                     close();
                     break;
+
+                case ACTION_PAUSE_CANCEL:
+                    if (mMediaPlayer.isPlaying()) {
+                        mute(false);
+                        mState = State.Playeng;
+                    }
             }
         }
+        setPhoneListener();
         return START_STICKY; //do not restart service if it is killed.
     }
 
@@ -247,12 +286,11 @@ public class MusicServiceStream extends Service
             sendUpdatePlayerIntent();
             mState = State.Playeng;
 //            buildNotification(false);
-            new AsyncHeaderParcer().execute();
         }
     }
 
     private void sendUpdatePlayerIntent() {
-        Log.d(TAG, "updatePlayerIntent");
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "sendUpdatePlayerIntent");
         Intent updatePlayerIntent = new Intent(RootActivity.UPDATE_PLAYER);
         LocalBroadcastManager.getInstance(this).sendBroadcast(updatePlayerIntent);
     }
@@ -306,7 +344,7 @@ public class MusicServiceStream extends Service
 
     //send an intent telling any activity listening to this intent that the media player is buffering.
     private void sendBufferingIntent() {
-        Utils.simpleLog(TAG + " sendBufferingIntent");
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "sendBufferingIntent");
         Intent bufferingPlayerIntent = new Intent(RootActivity.BUFFERING);
         LocalBroadcastManager.getInstance(this).sendBroadcast(bufferingPlayerIntent);
     }
@@ -314,10 +352,10 @@ public class MusicServiceStream extends Service
     private void processPauseRequest() {
 
         if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-            mMediaPlayer.pause();
-            sendUpdatePlayerIntent();
+            mute(true);
+//            sendUpdatePlayerIntent();
             mState = State.Paused;
-            relaxResources();
+//            relaxResources();
 //            buildNotification(false);
         }
     }
@@ -329,16 +367,16 @@ public class MusicServiceStream extends Service
      * just update the notification.
      */
     private void buildNotification(boolean startForeground) {
-        Intent intent = new Intent(getApplicationContext(), MusicServiceStream.class);
-        intent.setAction(ACTION_CLOSE);
-        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 1, intent, 0);
+
+//        Intent intent = new Intent(getApplicationContext(), RootActivity.class);
+////        intent.setAction(ACTION_CLOSE);
+//        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 1, intent, 0);
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setContentTitle("KZFR Radio").setContentText("Streaming Live")
-                .setSmallIcon(R.mipmap.ic_launcher).setOngoing(true)
-                .setContentIntent(getMainContentIntent())
-                .setDeleteIntent(pendingIntent);
+                .setContentTitle("Sternradio").setContentText("Streaming Live")
+                .setSmallIcon(R.mipmap.ic_launcher).setOngoing(true);
+
         if (mState == State.Paused || mState == State.Stopped) {
-            builder.addAction(generateAction(android.R.drawable.ic_media_play, "Play", ACTION_PLAY));
+            builder.addAction(generateAction(android.R.drawable.ic_media_play, "Play", ACTION_PAUSE_CANCEL));
         } else {
             builder.addAction(generateAction(android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE));
         }
@@ -410,10 +448,23 @@ public class MusicServiceStream extends Service
     }
 
     public void restoreNetwork() {
-        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "restoreNetwork");
-        mMediaPlayer.stop();
-        mMediaPlayer.reset();
-        configAndPrepareMediaPlayer();
+        if (!Utils.getNetworkState()) {
+            for (MusicInfoHelper.ChangeStateTrackListener listener : changeStateTrackListeners) {
+                listener.showNetworkError();
+            }
+            mState = State.Retrieving;
+        } else {
+            if (mState == State.Retrieving) {
+                for (MusicInfoHelper.ChangeStateTrackListener listener : changeStateTrackListeners) {
+                    listener.showAttemptRestoreState();
+                }
+                Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "restoreNetwork");
+                mMediaPlayer.stop();
+                mMediaPlayer.reset();
+                configAndPrepareMediaPlayer();
+            }
+        }
+
     }
 
     @Override
@@ -424,6 +475,19 @@ public class MusicServiceStream extends Service
     @Override
     public void onCompletion(MediaPlayer mp) {
         Utils.simpleLog(TAG + " onCompletion");
+        mState = State.Retrieving;
+        restoreNetwork();
+    }
+
+    public void mute(boolean mute) {
+        AudioManager am = (AudioManager) App.get().getSystemService(Context.AUDIO_SERVICE);
+        if (mute) {
+            mState = State.Paused;
+            am.setStreamMute(AudioManager.STREAM_MUSIC, true);
+        } else {
+            mState = State.Playeng;
+            am.setStreamMute(AudioManager.STREAM_MUSIC, false);
+        }
     }
 
     public class MediaPlayerBinder extends Binder {
@@ -433,11 +497,11 @@ public class MusicServiceStream extends Service
         }
     }
 
-    public void registerChangeTrackListener(MusicStreamHandler.ChangeStateTrackListener listener) {
+    public void registerChangeTrackListener(MusicInfoHelper.ChangeStateTrackListener listener) {
         changeStateTrackListeners.add(listener);
     }
 
-    public void unregisterChangeTrackListener(MusicStreamHandler.ChangeStateTrackListener listener) {
+    public void unregisterChangeTrackListener(MusicInfoHelper.ChangeStateTrackListener listener) {
         changeStateTrackListeners.remove(listener);
     }
 
@@ -457,31 +521,5 @@ public class MusicServiceStream extends Service
         Focused  // media player has full audio focus
     }
 
-    public class AsyncHeaderParcer extends AsyncTask<Void, Void, Void> {
 
-        private ParsingHeaderData.TrackData trackData;
-
-        @Override
-        protected Void doInBackground(Void... params) {
-            try {
-                URL url = new URL(
-                        mStreamUrl);
-                ParsingHeaderData streaming = new ParsingHeaderData();
-                trackData = streaming.getTrackDetails(url);
-                Log.e("Song Artist Name ", trackData.artist);
-                Log.e("Song Artist Title", trackData.title);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-        @Override
-        protected void onPostExecute(Void aVoid) {
-            super.onPostExecute(aVoid);
-            for (MusicStreamHandler.ChangeStateTrackListener listener : changeStateTrackListeners){
-                listener.updatePlayingTrack(trackData.artist + " " + trackData.title);
-            }
-        }
-    }
 }

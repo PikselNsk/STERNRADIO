@@ -5,17 +5,19 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaPlayer;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.SystemClock;
 
 import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.handler.MusicHandler;
-import info.javaway.sternradio.handler.MusicStreamHandler;
-import info.javaway.sternradio.service.MusicService;
+import info.javaway.sternradio.handler.MusicInfoHelper;
 import info.javaway.sternradio.service.MusicServiceStream;
 
-public class RootPresenter implements MusicHandler.ChangeStateTrackListener, ServiceConnection, MusicStreamHandler.ChangeStateTrackListener {
+public class RootPresenter implements  ServiceConnection, MusicInfoHelper.ChangeStateTrackListener {
 
     private static RootPresenter instance;
 
@@ -23,6 +25,8 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
     private MusicServiceStream musicService;
     private boolean mBound;
     private String nameOfNextTrack;
+    private TrackInfoUpdater trackInfoUpdater;
+    private String currentTrackInfo;
 
     public static RootPresenter getInstance() {
         if (instance == null) {
@@ -39,6 +43,8 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
                 service,
                 this,
                 Service.BIND_AUTO_CREATE);
+        trackInfoUpdater = new TrackInfoUpdater("TrackInfoUpdater");
+        trackInfoUpdater.start();
     }
 
     public void takeView(View view) {
@@ -58,7 +64,7 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
             if (Utils.getNetworkState()) {
                 String trackInfo = String.format(
                         App.getContext().getString(R.string.actual_track_info),
-                        musicService.getPlayingTrack());
+                        currentTrackInfo);
                 view.setTrackInfo(trackInfo);
 
                 trackInfo = String.format(
@@ -90,21 +96,27 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
 
     @Override
     public void updatePlayingTrack(String playingTrack) {
-        String trackInfo = String.format(
+
+        currentTrackInfo = playingTrack;
+
+        String infoAboutTrack = String.format(
                 App.getContext().getString(R.string.actual_track_info),
                 playingTrack);
-        view.setTrackInfo(trackInfo);
-        view.hideLoading();
+        view.setTrackInfo(infoAboutTrack);
     }
 
     @Override
     public void showNetworkError() {
-
+        view.showLoading();
+        view.setNextTrackInfo("");
+        view.setTrackInfo(App.getContext().getString(R.string.network_error));
     }
 
     @Override
     public void showAttemptRestoreState() {
-
+        view.showLoading();
+        view.setNextTrackInfo("");
+        view.setTrackInfo(App.getContext().getString(R.string.buffering));
     }
 
     @Override
@@ -138,10 +150,10 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
 
     public void clickOnPlayButton() {
         if (!musicService.playerIsPlay()){
-//            musicService.playFuckingMusic();
+            musicService.mute(false);
             view.showPlayButton();
         } else {
-//            musicService.stopFuckingMusic();
+            musicService.mute(true);
             view.showPauseButton();
         }
     }
@@ -174,6 +186,25 @@ public class RootPresenter implements MusicHandler.ChangeStateTrackListener, Ser
 
     public void release() {
         musicService.unregisterChangeTrackListener(this);
+
+    }
+
+    class TrackInfoUpdater extends Thread {
+
+        public TrackInfoUpdater(String name) {
+            super(name);
+        }
+
+        @Override
+        public void run() {
+            MusicInfoHelper musicInfoHelper = MusicInfoHelper.getInstance(RootPresenter.this);
+            while (true) {
+                if (Utils.getNetworkState()) {
+                    SystemClock.sleep(3000);
+                    musicInfoHelper.updateInfo();
+                }
+            }
+        }
     }
 
 }

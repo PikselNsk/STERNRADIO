@@ -24,6 +24,7 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.presenter.RootPresenter;
@@ -94,11 +95,12 @@ RootPresenter.View{
     @Override
     protected void onResume() {
         super.onResume();
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(App.getContext());
         playerStateChangeReceiver = new PlayerChangerReceiver();
         IntentFilter playerFilter = new IntentFilter();
         playerFilter.addAction(BUFFERING);
         playerFilter.addAction(UPDATE_PLAYER);
-        registerReceiver(playerStateChangeReceiver,
+        localBroadcastManager.registerReceiver(playerStateChangeReceiver,
                 playerFilter);
 
     }
@@ -109,7 +111,8 @@ RootPresenter.View{
         if (barVisualizer != null)
             barVisualizer.release();
         presenter.dropView();
-        unregisterReceiver(playerStateChangeReceiver);
+        LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(App.getContext());
+        localBroadcastManager.unregisterReceiver(playerStateChangeReceiver);
     }
 
     @Override
@@ -182,14 +185,14 @@ RootPresenter.View{
     @Override
     public void showLoading() {
         avi.show();
-        trackNameTv.setVisibility(View.GONE);
+        barVisualizer.setVisibility(View.INVISIBLE);
     }
 
     @Override
     public void hideLoading() {
+        Utils.simpleLog("Class: " + "RootActivity " + "Method: " + "hideLoading");
         avi.hide();
-        trackNameTv.setVisibility(View.VISIBLE);
-
+        barVisualizer.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -227,6 +230,7 @@ RootPresenter.View{
 
         @Override
         public void onReceive(final Context context, final Intent intent) {
+Utils.simpleLog("Class: " + "PlayerChangerReceiver " + "Method: " + "onReceive");
             switch (intent.getAction()){
                 case BUFFERING:{
                     showLoading();
@@ -237,8 +241,6 @@ RootPresenter.View{
                     break;
                 }
             }
-            Utils.simpleLog("player change " + intent.getAction());
-//        MusicHandler.getInstance().notifyAboutNetworkState();
         }
     }
 

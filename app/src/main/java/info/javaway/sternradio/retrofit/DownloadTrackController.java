@@ -19,7 +19,7 @@ public class DownloadTrackController {
         );
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         httpClient = new OkHttpClient.Builder()
-                .addInterceptor(interceptor)
+//                .addInterceptor(interceptor)
                 .build();
 
         Gson gson = new GsonBuilder()
