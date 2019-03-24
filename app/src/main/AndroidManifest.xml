@@ -19,21 +19,23 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-
+        <service
+            android:name=".service.NotificationControlService"
+            android:enabled="true"
+            android:exported="true"></service>
         <service
             android:name=".service.MusicService"
             android:enabled="true"
             android:exported="true" />
-
         <service
             android:name=".service.MusicServiceStream"
             android:enabled="true"
-            android:exported="true"/>
+            android:exported="true" />
 
         <activity
             android:name=".view.RootActivity"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".view.SplashActivity"
             android:label="@string/app_name"
@@ -44,6 +46,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <receiver android:name=".view.RootActivity$PlayerChangerReceiver" />
     </application>
 
 </manifest>

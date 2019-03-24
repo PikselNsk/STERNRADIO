@@ -37,7 +37,6 @@ import info.javaway.sternradio.view.RootActivity;
  */
 public class MusicServiceStream extends Service
         implements
-        AudioManager.OnAudioFocusChangeListener,
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnErrorListener,
         MediaPlayer.OnBufferingUpdateListener,
@@ -49,7 +48,7 @@ public class MusicServiceStream extends Service
     public static final String ACTION_PLAY = "info.javaway.sternradio.PLAY";
     public static final String ACTION_PAUSE = "info.javaway.sternradio.PAUSE";
     public static final String ACTION_PAUSE_CANCEL = "info.javaway.sternradio.ACTION_PAUSE_CANCEL";
-    private static final String ACTION_CLOSE = "info.javaway.sternradio.APP_CLOSE";
+    public static final String ACTION_CLOSE = "info.javaway.sternradio.APP_CLOSE";
     public static final String ACTION_CLOSE_IF_PAUSED = "info.javaway.sternradio.services.APP_CLOSE_IF_PAUSED";
     private static final int NOTIFICATION_ID = 4223;
     private MediaPlayer mMediaPlayer = new MediaPlayer();
@@ -82,7 +81,7 @@ public class MusicServiceStream extends Service
     }
 
 
-    @Override
+//    @Override
     public void onAudioFocusChange(int focusChange) {
         Utils.simpleLog(TAG + " onAudioFocusChange " + focusChange);
         switch (focusChange) {
@@ -204,7 +203,7 @@ public class MusicServiceStream extends Service
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onStartCommand " + intent.getAction());
+//        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onStartCommand " + intent.getAction());
         String action = null;
         if (intent != null) {
             action = intent.getAction();
@@ -232,7 +231,7 @@ public class MusicServiceStream extends Service
             }
         }
         setPhoneListener();
-        return START_STICKY; //do not restart service if it is killed.
+        return START_NOT_STICKY; //do not restart service if it is killed.
     }
 
     //if the media player is paused or stopped and this method has been triggered then stop the service.
@@ -260,8 +259,17 @@ public class MusicServiceStream extends Service
     private void configAndPrepareMediaPlayer() {
         initMediaPlayer();
         mState = State.Preparing;
+
         // TODO: 23.03.2019 отправить нотификацию
-//        buildNotification(true);
+        NotificationHelper.sendNotification(
+                App.getContext(),
+                "",
+                0,
+                null,
+                null,
+                null,
+                mState == MusicServiceStream.State.Paused || mState == MusicServiceStream.State.Stopped
+        );
         mMediaPlayer.prepareAsync();
 
     }
@@ -285,7 +293,15 @@ public class MusicServiceStream extends Service
             mMediaPlayer.start();
             sendUpdatePlayerIntent();
             mState = State.Playeng;
-//            buildNotification(false);
+            NotificationHelper.sendNotification(
+                    App.getContext(),
+                    "",
+                    0,
+                    null,
+                    null,
+                    null,
+                    false
+            );
         }
     }
 
@@ -303,16 +319,16 @@ public class MusicServiceStream extends Service
         setupWifiLock();
 //        mWifiLock.acquire();
 
-        tryToGetAudioFocus();
+//        tryToGetAudioFocus();
     }
 
-    private void tryToGetAudioFocus() {
-        if (mAudioFocus != AudioFocus.Focused && AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
-                mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC,
-                        AudioManager.AUDIOFOCUS_GAIN))
-            mAudioFocus = AudioFocus.Focused;
-
-    }
+//    private void tryToGetAudioFocus() {
+//        if (mAudioFocus != AudioFocus.Focused && AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
+//                mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC,
+//                        AudioManager.AUDIOFOCUS_GAIN))
+//            mAudioFocus = AudioFocus.Focused;
+//
+//    }
 
     /**
      * if the Media player is playing then stop it. Change the state and relax the wifi lock and
@@ -329,7 +345,7 @@ public class MusicServiceStream extends Service
         mState = State.Stopped;
         //relax the resources because we no longer need them.
         relaxResources();
-        giveUpAudioFocus();
+//        giveUpAudioFocus();
     }
 
     private void processPlayRequest() {
@@ -356,7 +372,15 @@ public class MusicServiceStream extends Service
 //            sendUpdatePlayerIntent();
             mState = State.Paused;
 //            relaxResources();
-//            buildNotification(false);
+            NotificationHelper.sendNotification(
+                    App.getContext(),
+                    "",
+                    0,
+                    null,
+                    null,
+                    null,
+                    mState == MusicServiceStream.State.Paused || mState == MusicServiceStream.State.Stopped
+            );
         }
     }
 
@@ -366,40 +390,13 @@ public class MusicServiceStream extends Service
      * paused or played. if foreGroundOrUpdate then the service should go to the foreground. else
      * just update the notification.
      */
-    private void buildNotification(boolean startForeground) {
-
-//        Intent intent = new Intent(getApplicationContext(), RootActivity.class);
-////        intent.setAction(ACTION_CLOSE);
-//        PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 1, intent, 0);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setContentTitle("Sternradio").setContentText("Streaming Live")
-                .setSmallIcon(R.mipmap.ic_launcher).setOngoing(true);
-
-        if (mState == State.Paused || mState == State.Stopped) {
-            builder.addAction(generateAction(android.R.drawable.ic_media_play, "Play", ACTION_PAUSE_CANCEL));
-        } else {
-            builder.addAction(generateAction(android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE));
-        }
-        builder.addAction(generateAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", ACTION_CLOSE));
-
-        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getApplicationContext());
-        if (startForeground)
-            startForeground(NOTIFICATION_ID, builder.build());
-        else
-            notificationManagerCompat.notify(NOTIFICATION_ID, builder.build());
-    }
 
     private PendingIntent getMainContentIntent() {
         Intent resultIntent = new Intent(this, RootActivity.class);
         return PendingIntent.getActivity(this, 0, resultIntent, PendingIntent.FLAG_UPDATE_CURRENT);
     }
 
-    private NotificationCompat.Action generateAction(int icon, String title, String intentAction) {
-        Intent intent = new Intent(getApplicationContext(), MusicServiceStream.class);
-        intent.setAction(intentAction);
-        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 1, intent, 0);
-        return new NotificationCompat.Action.Builder(icon, title, pendingIntent).build();
-    }
+
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -436,12 +433,12 @@ public class MusicServiceStream extends Service
         notificationManagerCompat.cancel(NOTIFICATION_ID);
     }
 
-    private void giveUpAudioFocus() {
-        if ((mAudioFocus == AudioFocus.Focused || mAudioFocus == AudioFocus.NoFocusCanDuck) &&
-                AudioManager.AUDIOFOCUS_REQUEST_GRANTED == mAudioManager.abandonAudioFocus(this)) {
-            mAudioFocus = AudioFocus.NoFocusNoDuck;
-        }
-    }
+//    private void giveUpAudioFocus() {
+//        if ((mAudioFocus == AudioFocus.Focused || mAudioFocus == AudioFocus.NoFocusCanDuck) &&
+//                AudioManager.AUDIOFOCUS_REQUEST_GRANTED == mAudioManager.abandonAudioFocus(this)) {
+//            mAudioFocus = AudioFocus.NoFocusNoDuck;
+//        }
+//    }
 
     public boolean isPlaying() {
         return mMediaPlayer != null && mMediaPlayer.isPlaying();

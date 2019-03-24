@@ -34,9 +34,13 @@ import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import static info.javaway.sternradio.service.MusicServiceStream.ACTION_CLOSE;
+import static info.javaway.sternradio.service.MusicServiceStream.ACTION_PAUSE;
+import static info.javaway.sternradio.service.MusicServiceStream.ACTION_PAUSE_CANCEL;
+
 public class RootActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
-RootPresenter.View{
+        RootPresenter.View {
 
     public static final String UPDATE_PLAYER = "info.javaway.sternradio.UPDATE_PLAYER";
     public static final String BUFFERING = "info.javaway.sternradio.BUFFERING";
@@ -90,20 +94,19 @@ RootPresenter.View{
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-    }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(App.getContext());
         playerStateChangeReceiver = new PlayerChangerReceiver();
         IntentFilter playerFilter = new IntentFilter();
         playerFilter.addAction(BUFFERING);
         playerFilter.addAction(UPDATE_PLAYER);
+        playerFilter.addAction(ACTION_PAUSE_CANCEL);
+        playerFilter.addAction(ACTION_PAUSE);
+        playerFilter.addAction(ACTION_CLOSE);
         localBroadcastManager.registerReceiver(playerStateChangeReceiver,
                 playerFilter);
-
     }
+
 
     @Override
     protected void onDestroy() {
@@ -201,7 +204,7 @@ RootPresenter.View{
     }
 
     @Override
-    public void setNextTrackInfo(String trackName){
+    public void setNextTrackInfo(String trackName) {
         nextTrackNameTv.setText(trackName);
     }
 
@@ -225,19 +228,31 @@ RootPresenter.View{
     }
 
 
-
-    class PlayerChangerReceiver extends BroadcastReceiver {
+    public class PlayerChangerReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(final Context context, final Intent intent) {
-Utils.simpleLog("Class: " + "PlayerChangerReceiver " + "Method: " + "onReceive");
-            switch (intent.getAction()){
-                case BUFFERING:{
+            Utils.simpleLog("Class: " + "PlayerChangerReceiver " + "Method: " + "onReceive " + intent.getAction());
+            switch (intent.getAction()) {
+                case BUFFERING: {
                     showLoading();
                     break;
                 }
-                case UPDATE_PLAYER:{
+                case UPDATE_PLAYER: {
                     hideLoading();
+                    break;
+                }
+                case ACTION_PAUSE:{
+                    presenter.clickOnPlayButton();
+                    break;
+                }
+                case ACTION_PAUSE_CANCEL :{
+                    presenter.clickOnPlayButton();
+                    break;
+                }
+                case ACTION_CLOSE:{
+                    finish();
+                    presenter.release();
                     break;
                 }
             }

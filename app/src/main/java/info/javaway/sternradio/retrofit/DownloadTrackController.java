@@ -3,8 +3,13 @@ package info.javaway.sternradio.retrofit;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.IOException;
+
 import info.javaway.sternradio.Utils;
+import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
@@ -18,8 +23,18 @@ public class DownloadTrackController {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor(Utils::simpleLog
         );
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+
+        Interceptor interceptorCache = new Interceptor() {
+            @Override public Response intercept(Chain chain) throws IOException {
+                Request request = chain.request();
+                Request.Builder builder = request.newBuilder().addHeader("Cache-Control", "no-cache");
+                request = builder.build();
+                return chain.proceed(request);
+            }
+        };
+
         httpClient = new OkHttpClient.Builder()
-//                .addInterceptor(interceptor)
+                .addInterceptor(interceptorCache)
                 .build();
 
         Gson gson = new GsonBuilder()

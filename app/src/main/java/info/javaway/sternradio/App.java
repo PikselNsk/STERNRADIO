@@ -95,10 +95,15 @@ public class App extends Application {
         @Override
         public void onServiceConnected(ComponentName className,
                                        IBinder service) {
+            Utils.simpleLog("Class: " + "App " + "Method: " + "onServiceConnected " + service);
             // We've bound to LocalService, cast the IBinder and get LocalService instance
-            MusicServiceStream.MediaPlayerBinder binder = (MusicServiceStream.MediaPlayerBinder) service;
-            musicService = binder.getService();
-            mBound = true;
+            try {
+                MusicServiceStream.MediaPlayerBinder binder = (MusicServiceStream.MediaPlayerBinder) service;
+                musicService = binder.getService();
+                mBound = true;
+            } catch (Exception e){
+                Utils.saveLog(e.getMessage());
+            }
         }
 
         @Override

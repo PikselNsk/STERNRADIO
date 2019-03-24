@@ -16,6 +16,7 @@ import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.handler.MusicHandler;
 import info.javaway.sternradio.handler.MusicInfoHelper;
 import info.javaway.sternradio.service.MusicServiceStream;
+import info.javaway.sternradio.service.NotificationHelper;
 
 public class RootPresenter implements  ServiceConnection, MusicInfoHelper.ChangeStateTrackListener {
 
@@ -149,6 +150,8 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
     }
 
     public void clickOnPlayButton() {
+        Utils.simpleLog("Class: " + "RootPresenter " + "Method: " + "clickOnPlayButton");
+        boolean isPause = musicService.playerIsPlay();
         if (!musicService.playerIsPlay()){
             musicService.mute(false);
             view.showPlayButton();
@@ -156,6 +159,13 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
             musicService.mute(true);
             view.showPauseButton();
         }
+        NotificationHelper.sendNotification(App.getContext(),
+                "",
+                0,
+                null,
+                null,
+                null,
+                isPause);
     }
 
     public void restoreNetwork() {
@@ -186,10 +196,10 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
 
     public void release() {
         musicService.unregisterChangeTrackListener(this);
-
+        trackInfoUpdater.interrupt();
     }
 
-    class TrackInfoUpdater extends Thread {
+    public class TrackInfoUpdater extends Thread {
 
         public TrackInfoUpdater(String name) {
             super(name);
