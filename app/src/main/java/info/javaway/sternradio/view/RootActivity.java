@@ -252,6 +252,7 @@ public class RootActivity extends AppCompatActivity
                 }
                 case ACTION_CLOSE:{
                     finish();
+
                     presenter.release();
                     break;
                 }

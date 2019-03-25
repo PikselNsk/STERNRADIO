@@ -121,6 +121,7 @@ public class MusicServiceStream extends Service
     }
 
 
+
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
 //        Utils.simpleLog(TAG + " onError " + what);
@@ -234,6 +235,8 @@ public class MusicServiceStream extends Service
         return START_NOT_STICKY; //do not restart service if it is killed.
     }
 
+
+
     //if the media player is paused or stopped and this method has been triggered then stop the service.
     private void closeIfPaused() {
         if (mState == State.Paused || mState == State.Stopped) {
@@ -241,7 +244,8 @@ public class MusicServiceStream extends Service
         }
     }
 
-    private void close() {
+    public void close() {
+        stopMediaPlayer();
         removeNotification();
         stopSelf();
     }
@@ -410,7 +414,10 @@ public class MusicServiceStream extends Service
 
     @Override
     public void onDestroy() {
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onDestroy");
         stopMediaPlayer();
+        NotificationHelper.clearNotification();
+
     }
 
     //give up wifi lock if it is held and stop the service from being a foreground service.
@@ -428,9 +435,7 @@ public class MusicServiceStream extends Service
     }
 
     private void removeNotification() {
-        NotificationManagerCompat notificationManagerCompat = NotificationManagerCompat.from(getApplicationContext());
-
-        notificationManagerCompat.cancel(NOTIFICATION_ID);
+        NotificationHelper.clearNotification();
     }
 
 //    private void giveUpAudioFocus() {

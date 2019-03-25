@@ -25,6 +25,7 @@ import static info.javaway.sternradio.service.MusicServiceStream.ACTION_PAUSE_CA
 public class NotificationHelper {
     private static final String CHANNEL_ID_1 = "info.javaway.CHANNEL_ID_1";
     private static final String CHANNEL_ID_2 = "info.javaway.CHANNEL_ID_2";
+    public static final int STERN_NOTIFICATION_ID = 45315;
 
     public static void sendNotification(
             Context ctx,
@@ -82,7 +83,7 @@ public class NotificationHelper {
             notificationBuilder.addAction(generateAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", NotificationControlService.ACTION_CLOSE));
 
             Notification notification = notificationBuilder.build();
-            notificationManager.notify(/*notification id*/1, notification);
+            notificationManager.notify(STERN_NOTIFICATION_ID, notification);
         } catch (Exception e) {
             Utils.saveLog(e.getMessage());
         }
@@ -98,5 +99,12 @@ public class NotificationHelper {
         return new NotificationCompat.Action.Builder(icon, title, pendingIntent).build();
     }
 
+
+    public static void clearNotification() {
+        Utils.simpleLog("Class: " + "NotificationHelper " + "Method: " + "clearNotification");
+        NotificationManager notificationManager =
+                (NotificationManager) App.getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(STERN_NOTIFICATION_ID);
+    }
 
 }

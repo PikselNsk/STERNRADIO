@@ -81,6 +81,7 @@ public class App extends Application {
     @Override
     public void onTerminate() {
         unregisterReceiver(networkStateChangeReceiver);
+        unbindService(mConnection);
         musicService.stopSelf();
         super.onTerminate();
 

@@ -103,7 +103,9 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
         String infoAboutTrack = String.format(
                 App.getContext().getString(R.string.actual_track_info),
                 playingTrack);
-        view.setTrackInfo(infoAboutTrack);
+        if (view!=null) {
+            view.setTrackInfo(infoAboutTrack);
+        }
     }
 
     @Override
@@ -126,7 +128,9 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
         String trackInfo = String.format(
                 App.getContext().getString(R.string.next_track_info),
                 nameOfNextTrack);
-        view.setNextTrackInfo(trackInfo);
+        if(view!=null) {
+            view.setNextTrackInfo(trackInfo);
+        }
     }
 
     @Override
@@ -195,7 +199,11 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
     }
 
     public void release() {
+        Utils.simpleLog("Class: " + "RootPresenter " + "Method: " + "release");
         musicService.unregisterChangeTrackListener(this);
+        App.getContext().unbindService(this);
+
+        musicService.close();
         trackInfoUpdater.interrupt();
     }
 

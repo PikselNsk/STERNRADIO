@@ -20,7 +20,7 @@ public class NotificationControlService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Utils.simpleLog("Class: " + "NotificationControlService " + "Method: " + "onStartCommand " + intent.getAction());
+        Utils.simpleLog("Class: " + "NotificationControlService " + "Method: " + "onStartCommand ");
         String action = intent.getAction();
 
         bufferingPlayerIntent = new Intent();
