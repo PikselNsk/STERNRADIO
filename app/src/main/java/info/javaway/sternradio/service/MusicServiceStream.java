@@ -2,8 +2,10 @@ package info.javaway.sternradio.service;
 
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SubtitleData;
@@ -26,6 +28,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
@@ -40,7 +43,7 @@ public class MusicServiceStream extends Service
         MediaPlayer.OnPreparedListener,
         MediaPlayer.OnErrorListener,
         MediaPlayer.OnBufferingUpdateListener,
-        MediaPlayer.OnInfoListener, MediaPlayer.OnSubtitleDataListener, MediaPlayer.OnCompletionListener {
+        MediaPlayer.OnInfoListener, MediaPlayer.OnCompletionListener {
 
     private static final String TAG = MusicServiceStream.class.getSimpleName();
 
@@ -52,6 +55,7 @@ public class MusicServiceStream extends Service
     public static final String ACTION_CLOSE_IF_PAUSED = "info.javaway.sternradio.services.APP_CLOSE_IF_PAUSED";
     private static final int NOTIFICATION_ID = 4223;
     private MediaPlayer mMediaPlayer = new MediaPlayer();
+    private PhoneStateReceiver phoneStateReceiver = new PhoneStateReceiver();
     private AudioManager mAudioManager = null;
 
     private static final String mStreamUrl = "https://a1.radioheart.ru:9011/RH6977";
@@ -80,64 +84,22 @@ public class MusicServiceStream extends Service
 
     }
 
-
-//    @Override
-    public void onAudioFocusChange(int focusChange) {
-        Utils.simpleLog(TAG + " onAudioFocusChange " + focusChange);
-        switch (focusChange) {
-            case AudioManager.AUDIOFOCUS_GAIN:
-                mAudioFocus = AudioFocus.Focused;
-                // resume playback
-                if (mState == State.Playeng) {
-                    startMediaPlayer();
-                    mMediaPlayer.setVolume(1.0f, 1.0f);
-                }
-                break;
-
-            case AudioManager.AUDIOFOCUS_LOSS:
-                mAudioFocus = AudioFocus.NoFocusNoDuck;
-                // Lost focus for an unbounded amount of time: stop playback and release media player
-
-                stopMediaPlayer();
-                break;
-
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                mAudioFocus = AudioFocus.NoFocusNoDuck;
-                // Lost focus for a short time, but we have to stop
-                // playback. We don't release the media player because playback
-                // is likely to resume
-                processPauseRequest();
-                break;
-
-            case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                mAudioFocus = AudioFocus.NoFocusCanDuck;
-                // Lost focus for a short time, but it's ok to keep playing
-                // at an attenuated level
-                if (mMediaPlayer.isPlaying()) mMediaPlayer.setVolume(0.1f, 0.1f);
-                break;
-
-
-        }
-    }
-
-
-
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
 //        Utils.simpleLog(TAG + " onError " + what);
 //        startMediaPlayer();
+        Utils.saveLog("Class: " + "MusicServiceStream " + "Method: " + "onError " + what + " " + extra);
         return true;
     }
 
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        Utils.simpleLog(TAG + " onBufferingUpdate");
+        Utils.saveLog("Class: " + "MusicServiceStream " + "Method: " + "onBufferingUpdate");
     }
 
     @Override
     public boolean onInfo(MediaPlayer mp, int what, int extra) {
-        Utils.simpleLog(TAG + " onInfo " + extra);
-
+        Utils.saveLog("Class: " + "MusicServiceStream " + "Method: " + "onInfo " + what + " " + extra);
         return false;
     }
 
@@ -148,22 +110,13 @@ public class MusicServiceStream extends Service
         }
     }
 
-    private void setupWifiLock() {
-//        if (mWifiLock == null) {
-//            mWifiLock = ((WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE))
-//                    .createWifiLock(WifiManager.WIFI_MODE_FULL, "mediaplayerlock");
-//        }
-    }
-
     private void setupMediaPlayer() {
 
         mMediaPlayer.setOnPreparedListener(this);
         mMediaPlayer.setOnErrorListener(this);
         mMediaPlayer.setOnBufferingUpdateListener(this);
         mMediaPlayer.setOnInfoListener(this);
-        mMediaPlayer.setOnSubtitleDataListener(this);
         mMediaPlayer.setOnCompletionListener(this);
-//            mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
         mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         try {
             mMediaPlayer.setDataSource(mStreamUrl);
@@ -176,21 +129,28 @@ public class MusicServiceStream extends Service
 
     private void setPhoneListener() {
         PhoneStateListener phoneStateListener = new PhoneStateListener() {
+
             @Override
             public void onCallStateChanged(int state, String incomingNumber) {
+                Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onCallStateChanged CALL_STATE_RINGING");
+
                 if (state == TelephonyManager.CALL_STATE_RINGING) {
+                    Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onCallStateChanged CALL_STATE_RINGING");
                     //Incoming call: Pause music
                     mute(true);
                 } else if (state == TelephonyManager.CALL_STATE_IDLE) {
+                    Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onCallStateChanged CALL_STATE_IDLE");
                     //Not in call: Play music
                     mute(false);
                 } else if (state == TelephonyManager.CALL_STATE_OFFHOOK) {
+                    Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onCallStateChanged CALL_STATE_OFFHOOK");
                     //A call is dialing, active or on hold
                     mute(true);
                 }
-                super.onCallStateChanged(state, incomingNumber);
             }
         };
+        IntentFilter intentFilter = new IntentFilter("android.intent.action.PHONE_STATE");
+        registerReceiver(phoneStateReceiver, intentFilter);
         TelephonyManager mgr = (TelephonyManager) App.get().getSystemService(Context.TELEPHONY_SERVICE);
         if (mgr != null) {
             mgr.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
@@ -204,7 +164,7 @@ public class MusicServiceStream extends Service
      */
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-//        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onStartCommand " + intent.getAction());
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onStartCommand " + intent.getAction());
         String action = null;
         if (intent != null) {
             action = intent.getAction();
@@ -236,7 +196,6 @@ public class MusicServiceStream extends Service
     }
 
 
-
     //if the media player is paused or stopped and this method has been triggered then stop the service.
     private void closeIfPaused() {
         if (mState == State.Paused || mState == State.Stopped) {
@@ -248,6 +207,7 @@ public class MusicServiceStream extends Service
         stopMediaPlayer();
         removeNotification();
         stopSelf();
+        System.exit(0);
     }
 
     private void initMediaPlayer() {
@@ -320,19 +280,8 @@ public class MusicServiceStream extends Service
      */
     private void requestResources() {
         setupAudioManager();
-        setupWifiLock();
-//        mWifiLock.acquire();
-
-//        tryToGetAudioFocus();
     }
 
-//    private void tryToGetAudioFocus() {
-//        if (mAudioFocus != AudioFocus.Focused && AudioManager.AUDIOFOCUS_REQUEST_GRANTED ==
-//                mAudioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC,
-//                        AudioManager.AUDIOFOCUS_GAIN))
-//            mAudioFocus = AudioFocus.Focused;
-//
-//    }
 
     /**
      * if the Media player is playing then stop it. Change the state and relax the wifi lock and
@@ -401,14 +350,15 @@ public class MusicServiceStream extends Service
     }
 
 
-
     @Override
     public IBinder onBind(Intent intent) {
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onBind");
         return mMediaPlayerBinder;
     }
 
     @Override
     public boolean onUnbind(Intent intent) {
+        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onUnbind");
         return false;
     }
 
@@ -469,10 +419,6 @@ public class MusicServiceStream extends Service
 
     }
 
-    @Override
-    public void onSubtitleData(@NonNull MediaPlayer mp, @NonNull SubtitleData data) {
-        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onSubtitleData");
-    }
 
     @Override
     public void onCompletion(MediaPlayer mp) {
@@ -483,11 +429,15 @@ public class MusicServiceStream extends Service
 
     public void mute(boolean mute) {
         AudioManager am = (AudioManager) App.get().getSystemService(Context.AUDIO_SERVICE);
+
         if (mute) {
             mState = State.Paused;
+            mMediaPlayer.setVolume(0f, 0f);
             am.setStreamMute(AudioManager.STREAM_MUSIC, true);
         } else {
             mState = State.Playeng;
+            mMediaPlayer.setVolume(1f, 1f);
+
             am.setStreamMute(AudioManager.STREAM_MUSIC, false);
         }
     }
@@ -523,5 +473,36 @@ public class MusicServiceStream extends Service
         Focused  // media player has full audio focus
     }
 
+    public class PhoneStateReceiver extends BroadcastReceiver {
 
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals(Intent.ACTION_NEW_OUTGOING_CALL)) {
+                String phoneNumber = intent.getStringExtra(Intent.EXTRA_PHONE_NUMBER);    // outgoing call
+                Log.i(TAG, "call OUT:" + phoneNumber);
+            } else {
+                TelephonyManager tm = (TelephonyManager) context.getSystemService(Service.TELEPHONY_SERVICE);
+
+                switch (tm.getCallState()) {
+                    case TelephonyManager.CALL_STATE_RINGING:  // incoming call
+                        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onCallStateChanged CALL_STATE_RINGING");
+                        //Incoming call: Pause music
+                        mute(true);
+                        break;
+                    case TelephonyManager.CALL_STATE_OFFHOOK:
+                        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onCallStateChanged CALL_STATE_OFFHOOK");
+                        //A call is dialing, active or on hold
+                        mute(true);
+                        break;
+
+                    case TelephonyManager.CALL_STATE_IDLE:
+                        Utils.simpleLog("Class: " + "MusicServiceStream " + "Method: " + "onCallStateChanged CALL_STATE_IDLE");
+                        //Not in call: Play music
+                        mute(false);
+                        break;
+                }
+
+            }
+        }
+    }
 }

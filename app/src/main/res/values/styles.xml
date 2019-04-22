@@ -6,6 +6,7 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:textColorSecondary">#FFFFFF</item>
     </style>
 
     <style name="AppTheme.NoActionBar">
@@ -17,4 +18,62 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="DialogMainContainer">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@drawable/bckg_dialog_simple</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:padding">@dimen/default_padding</item>
+    </style>
+
+    <style name="DialogButtonContainer">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
+
+    <style name="DialogButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">22dp</item>
+    </style>
+    <style name="SettingsAlarmLinearLayout">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:padding">@dimen/default_padding</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="ContainerSettingsAlarmSwitcher">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="ContainerSettingsAlarmSwitcherFirstElement" parent="ContainerSettingsAlarmSwitcher">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">5</item>
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <style name="ContainerSettingsAlarmSwitcherSecondElement" parent="ContainerSettingsAlarmSwitcherFirstElement">
+        <item name="android:layout_weight">1</item>
+    </style>
+
+    <style name="SettingsAlarmTextViewTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">@dimen/settings_title</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="SettingsAlarmTextViewSubtitle" parent="SettingsAlarmTextViewTitle">
+        <item name="android:textSize">@dimen/settings_subtitle</item>
+        <item name="android:textColor">@color/colorText</item>
+    </style>
 </resources>

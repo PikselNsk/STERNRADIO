@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    style="@style/DialogMainContainer">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout style="@style/SettingsAlarmLinearLayout">
+
+                <LinearLayout style="@style/ContainerSettingsAlarmSwitcher">
+
+                    <LinearLayout style="@style/ContainerSettingsAlarmSwitcherFirstElement">
+
+                        <TextView
+                            style="@style/SettingsAlarmTextViewTitle"
+                            android:text="@string/settings_notification" />
+
+                        <TextView
+                            style="@style/SettingsAlarmTextViewSubtitle"
+                            android:text="@string/settings_notification_subtitle" />
+                    </LinearLayout>
+
+                    <LinearLayout style="@style/ContainerSettingsAlarmSwitcherSecondElement">
+
+                        <androidx.appcompat.widget.AppCompatCheckBox
+                            android:id="@+id/notification_check_box"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            app:buttonTint="@color/white" />
+
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <include layout="@layout/separator_white" />
+
+    <LinearLayout style="@style/DialogButtonContainer">
+
+        <Button
+            android:id="@+id/ok_button"
+            style="@style/DialogButton"
+            android:text="@string/ok" />
+    </LinearLayout>
+</LinearLayout>

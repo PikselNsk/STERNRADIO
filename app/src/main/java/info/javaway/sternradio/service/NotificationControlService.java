@@ -40,7 +40,7 @@ public class NotificationControlService extends Service {
         }
         LocalBroadcastManager.getInstance(this).sendBroadcast(bufferingPlayerIntent);
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_NOT_STICKY;
     }
 
     @Override

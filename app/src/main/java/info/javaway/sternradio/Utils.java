@@ -49,6 +49,7 @@ public class Utils {
 
     public static boolean getNetworkState;
     private static SimpleDateFormat dateFormat;
+    private static Date date = new Date();
     private static int cardColor;
     private static int textColor;
     private static int favoritePick;
@@ -117,9 +118,7 @@ public class Utils {
     }
 
 
-    public static void sendToast(String text) {
-        Toast.makeText(App.getContext(), text, Toast.LENGTH_SHORT).show();
-    }
+
 
     public static SimpleDateFormat getDateFormat() {
         if (dateFormat == null) {
@@ -129,18 +128,11 @@ public class Utils {
         return dateFormat;
     }
 
-    public static boolean isOnline() {
-        ConnectivityManager connMgr = (ConnectivityManager)
-                App.getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-        return (networkInfo != null && networkInfo.isConnected());
-    }
-
 
     public static void saveLog(String logMessage) {
 // TODO: 27.01.2019 раскомментировать для дебага
         Runnable runnable = () -> {
-            String dataDir = App.getContext().getApplicationInfo().dataDir;
+//            String dataDir = App.getContext().getApplicationInfo().dataDir;
             File path = new File("sdcard/sternradio_log/");
             File logFile = new File("sdcard/sternradio_log/sternradio_log.txt");
 
@@ -154,15 +146,19 @@ public class Utils {
                 }
             }
             try {
-
+                Utils.simpleLog("Class: " + "Utils " + "Method: " + "saveLog");
                 //BufferedWriter for performance, true to set append to file flag
+                date.setTime(System.currentTimeMillis());
+                getDateFormat();
                 BufferedWriter buf = new BufferedWriter(new FileWriter(logFile, true));
+                buf.append(dateFormat.format(date));
                 buf.append(" : ");
                 buf.append(logMessage);
                 buf.newLine();
                 buf.close();
+                Utils.simpleLog("Class: " + "Utils " + "Method: " + "saveLog close");
             } catch (Exception e) {
-                e.printStackTrace();
+                Utils.simpleLog("Class: " + "Utils " + "Method: " + "saveLog " + e.getMessage());
             }
         };
         Thread thread = new Thread(runnable);

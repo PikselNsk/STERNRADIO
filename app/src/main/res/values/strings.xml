@@ -2,14 +2,31 @@
     <string name="app_name">STERNRADIO</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
+    <string name="nav_header_title">Мы с теми, кто в теме!</string>
     <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
-    <string name="action_settings">Settings</string>
-    <string name="network_error">Network error. Restore network and restart station!</string>
+    <string name="action_settings">Настройки</string>
+    <string name="network_error">Ошибка сети. Восстановите подключение для дальнейшего проигрывания!</string>
     <string name="actual_track_info">В эфире:\n%s</string>
     <string name="next_track_info">Следующий:\n%s</string>
     <string name="buffering">Буферизация...</string>
     <string name="permission_info">Для корректной работы радио необходимо выдать разрешения. Доступ к файлам нужен для буферизации аудиопотока. Доступ к звонкам необходим для того, что бы во время входящего звонка радио отключалось. Для продолжения нажмите кнопку Выдать разрешения.</string>
     <string name="granted_permissions">Выдать разрешения</string>
+    <string name="ok">Ок</string>
+    <string name="info_radio">Привет друзья и все любители рок-музыки! Мы рады сообщить вам о запуске нашего проекта! STERNRADIO-это постоянный поток рок музыки 24 часа в сутки. Вы услышите много знакомых композиций начиная от пост-панка до самого метал-кора. Но самая главная суть нашего проекта это поведать вам о нашей отечественной андеграунд сцене. С нами сотрудничают уже множество команд играющих рок музыку в самых разных направлениях. А если у вас к тому же есть свой музыкальный коллектив, то вам повезло вдвойне! У вас есть все шансы попасть к нам в эфир. Каждую неделю мы будем открывать и рассказывать вам про наши команды которые качают рифы от Мурманска до самой Камчатки! \n /команда STERNRADIO/</string>
+    <string name="beta_info">Уважаемые пользователи, наше приложение ещё маленькое и довольно сырое. Оно находится в бета-тестировании. Если Вы заметите баги или у Вас есть идеи по его улучшению, то пишите на почту, мы будет очень рады обратной связи. \n
+Что будет реализовано попозже:\n
+- отправка заказов\n
+- добавление треков в избранное\n
+- раздел с новостями \n
+- виджет для рабочего стола</string>
+    <string name="settings_notification">Включить уведомление</string>
+    <string name="settings_notification_subtitle">Постоянное уведомление в строке состояния с кнопками паузы и выхода</string>
+    <string name="site_sternradio">Наш сайт</string>
+    <string name="beta_version">Бета версия!</string>
+    <string name="send_email">Почта</string>
+    <string name="share_app">Поделиться</string>
+    <string name="about_radio">О нас</string>
+    <string name="settings">Настройки</string>
+    <string name="communicate">Взаимодействие</string>
 </resources>

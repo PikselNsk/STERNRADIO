@@ -18,7 +18,7 @@ import info.javaway.sternradio.handler.MusicInfoHelper;
 import info.javaway.sternradio.service.MusicServiceStream;
 import info.javaway.sternradio.service.NotificationHelper;
 
-public class RootPresenter implements  ServiceConnection, MusicInfoHelper.ChangeStateTrackListener {
+public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeStateTrackListener {
 
     private static RootPresenter instance;
 
@@ -28,8 +28,10 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
     private String nameOfNextTrack;
     private TrackInfoUpdater trackInfoUpdater;
     private String currentTrackInfo;
+    private boolean isPause;
 
     public static RootPresenter getInstance() {
+        Utils.saveLog("Class: " + "RootPresenter " + "Method: " + "getInstance " + (instance == null));
         if (instance == null) {
             instance = new RootPresenter();
         }
@@ -37,6 +39,7 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
     }
 
     public RootPresenter() {
+        Utils.saveLog("Class: " + "RootPresenter " + "Method: " + "RootPresenter");
         Intent service = new Intent(App.getContext(), MusicServiceStream.class);
         service.setAction(MusicServiceStream.ACTION_PLAY);
         App.getContext().startService(service);
@@ -50,14 +53,14 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
 
     public void takeView(View view) {
         this.view = view;
-        if(musicService == null) {
+        if (musicService == null) {
             if (Utils.getNetworkState()) {
                 view.setTrackInfo("Буферизация...");
             } else {
                 view.showError(App.getContext().getString(R.string.network_error));
             }
         } else {
-            if (musicService.playerIsPlay()){
+            if (musicService.playerIsPlay()) {
                 view.showPlayButton();
             } else {
                 view.showPauseButton();
@@ -78,7 +81,7 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
 
             view.initialVisualBar();
 
-            if (musicService.isPlaying()){
+            if (musicService.isPlaying()) {
                 view.hideLoading();
             }
         }
@@ -87,7 +90,9 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
     }
 
     public void dropView() {
+        Utils.simpleLog("Class: " + "RootPresenter " + "Method: " + "dropView");
         Utils.clearAppCompatActivity();
+        NotificationHelper.clearNotification();
         view = null;
     }
 
@@ -103,13 +108,14 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
         String infoAboutTrack = String.format(
                 App.getContext().getString(R.string.actual_track_info),
                 playingTrack);
-        if (view!=null) {
+        if (view != null) {
             view.setTrackInfo(infoAboutTrack);
         }
     }
 
     @Override
     public void showNetworkError() {
+        Utils.saveLog("Class: " + "RootPresenter " + "Method: " + "showNetworkError");
         view.showLoading();
         view.setNextTrackInfo("");
         view.setTrackInfo(App.getContext().getString(R.string.network_error));
@@ -117,6 +123,7 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
 
     @Override
     public void showAttemptRestoreState() {
+        Utils.saveLog("Class: " + "RootPresenter " + "Method: " + "showAttemptRestoreState");
         view.showLoading();
         view.setNextTrackInfo("");
         view.setTrackInfo(App.getContext().getString(R.string.buffering));
@@ -128,7 +135,7 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
         String trackInfo = String.format(
                 App.getContext().getString(R.string.next_track_info),
                 nameOfNextTrack);
-        if(view!=null) {
+        if (view != null) {
             view.setNextTrackInfo(trackInfo);
         }
     }
@@ -154,9 +161,11 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
     }
 
     public void clickOnPlayButton() {
-        Utils.simpleLog("Class: " + "RootPresenter " + "Method: " + "clickOnPlayButton");
-        boolean isPause = musicService.playerIsPlay();
-        if (!musicService.playerIsPlay()){
+        Utils.saveLog("Class: " + "RootPresenter " + "Method: " + "clickOnPlayButton" +
+                " Utils.getNetworkState() " + Utils.getNetworkState());
+        if (!Utils.getNetworkState()) return;
+        isPause = musicService.playerIsPlay();
+        if (!musicService.playerIsPlay()) {
             musicService.mute(false);
             view.showPlayButton();
         } else {
@@ -173,9 +182,20 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
     }
 
     public void restoreNetwork() {
-        if (musicService!= null) {
+        if (musicService != null) {
             musicService.restoreNetwork();
         }
+    }
+
+    public void onResume() {
+        NotificationHelper.sendNotification(
+                App.getContext(),
+                "",
+                0,
+                null,
+                null,
+                null,
+                isPause);
     }
 
     public interface View {
@@ -199,10 +219,10 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
     }
 
     public void release() {
-        Utils.simpleLog("Class: " + "RootPresenter " + "Method: " + "release");
+        Utils.saveLog("Class: " + "RootPresenter " + "Method: " + "release");
+        instance = null;
         musicService.unregisterChangeTrackListener(this);
         App.getContext().unbindService(this);
-
         musicService.close();
         trackInfoUpdater.interrupt();
     }
@@ -217,6 +237,7 @@ public class RootPresenter implements  ServiceConnection, MusicInfoHelper.Change
         public void run() {
             MusicInfoHelper musicInfoHelper = MusicInfoHelper.getInstance(RootPresenter.this);
             while (true) {
+                if (isInterrupted()) return;
                 if (Utils.getNetworkState()) {
                     SystemClock.sleep(3000);
                     musicInfoHelper.updateInfo();

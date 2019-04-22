@@ -36,7 +36,7 @@ public class MusicInfoHelper {
 
 
     public MusicInfoHelper() {
-        Utils.saveLog("MusicHandler constructor Thread name : " + Thread.currentThread().getName());
+//        Utils.saveLog("MusicHandler constructor Thread name : " + Thread.currentThread().getName());
         loader = new TrackLoader();
 //        setPhoneListener();
     }
@@ -74,8 +74,8 @@ public class MusicInfoHelper {
         }
     }
 
-    public static MusicInfoHelper getInstance( ChangeStateTrackListener listener) {
-        Utils.saveLog("MusicHandler getInstance");
+    public static MusicInfoHelper getInstance(ChangeStateTrackListener listener) {
+//        Utils.saveLog("MusicHandler getInstance");
         if (instance == null) {
             instance = new MusicInfoHelper();
         }
@@ -91,18 +91,16 @@ public class MusicInfoHelper {
     private class TrackLoader {
 
         public boolean loadInfoAboutLastTrack() {
-            Utils.saveLog("TrackLoader loadInfoAboutLastTrack");
-
+//            Utils.saveLog("Class: " + "TrackLoader " + "Method: " + "loadInfoAboutLastTrack");
             if (Utils.getNetworkState()) {
                 RadioApi api = DownloadTrackController.getApi();
                 api.loadLastTracks().enqueue(new Callback<Track[]>() {
                     @Override
                     public void onResponse(Call<Track[]> call, Response<Track[]> response) {
-                        Utils.saveLog("TrackLoader loadInfoAboutLastTrack onResponse");
+//                        Utils.saveLog("TrackLoader loadInfoAboutLastTrack onResponse.body() = " +
+//                        (response == null ? null : response.body()));
 
-                        Utils.simpleLog("MusicHandler");
                         Track[] tracks = response.body();
-                        Utils.simpleLog(Arrays.toString(tracks));
                         if (tracks != null && tracks.length > 0) {
                             lastTrack = tracks[0];
                             eventsMusicListener.updatePlayingTrack(lastTrack.getName());
@@ -111,7 +109,7 @@ public class MusicInfoHelper {
 
                     @Override
                     public void onFailure(Call<Track[]> call, Throwable t) {
-
+                        Utils.saveLog("Class: " + "TrackLoader " + "Method: " + "onFailure " + t.getMessage());
                     }
                 });
                 return true;
@@ -122,25 +120,29 @@ public class MusicInfoHelper {
 
         public void loadNextTrackInfo() {
 
-                RadioApi api = DownloadTrackController.getApi();
-                api.loadNextTracks().enqueue(new Callback<OldVersionTrack[]>() {
-                    @Override
-                    public void onResponse(Call<OldVersionTrack[]> call, Response<OldVersionTrack[]> response) {
-                        OldVersionTrack[] oldVersionTracks = response.body();
-                        nextTrack = oldVersionTracks[0];
-                        eventsMusicListener.updateNextTrack(nextTrack.getName());
-                    }
+            RadioApi api = DownloadTrackController.getApi();
+            api.loadNextTracks().enqueue(new Callback<OldVersionTrack[]>() {
+                @Override
+                public void onResponse(Call<OldVersionTrack[]> call, Response<OldVersionTrack[]> response) {
 
-                    @Override
-                    public void onFailure(Call<OldVersionTrack[]> call, Throwable t) {
-                        Utils.saveLog("TrackLoader loadNextTracks onFailure");
-                        nextTrack = null;
-                    }
-                });
-            }
+//                    Utils.saveLog("Class: " + "TrackLoader " + "Method: " + "onResponse "
+//                            + (response == null ? null : response.body()));
+                    OldVersionTrack[] oldVersionTracks = response.body();
+                    nextTrack = oldVersionTracks[0];
+                    eventsMusicListener.updateNextTrack(nextTrack.getName());
+                }
+
+                @Override
+                public void onFailure(Call<OldVersionTrack[]> call, Throwable t) {
+                    Utils.saveLog("Class: " + "TrackLoader " + "Method: " + "onFailure " + t.getLocalizedMessage());
+                    nextTrack = null;
+                }
+            });
+        }
 
 
     }
+
     public interface ChangeStateTrackListener {
         void updatePlayingTrack(String playingTrack);
 

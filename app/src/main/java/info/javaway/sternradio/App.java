@@ -18,6 +18,8 @@ import org.acra.config.CoreConfigurationBuilder;
 import org.acra.data.StringFormat;
 
 import androidx.multidex.MultiDex;
+
+import info.javaway.sternradio.handler.PrefManager;
 import info.javaway.sternradio.service.MusicServiceStream;
 
 public class App extends Application {
@@ -26,7 +28,6 @@ public class App extends Application {
     private static App instance;
     private NetworkChangerReceiver networkStateChangeReceiver;
     private static MusicServiceStream musicService;
-    private boolean mBound;
 
     public App() {
         instance = this;
@@ -44,6 +45,8 @@ public class App extends Application {
     @Override
     protected void attachBaseContext(Context base) {
         super.attachBaseContext(base);
+        PrefManager.init(this);
+
         networkStateChangeReceiver = new NetworkChangerReceiver();
         registerReceiver(networkStateChangeReceiver, new IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"));
         bindService(new Intent(this, MusicServiceStream.class), mConnection, Service.BIND_AUTO_CREATE);
@@ -78,8 +81,11 @@ public class App extends Application {
         ACRA.init(this, builder);
     }
 
+
+
     @Override
     public void onTerminate() {
+        Utils.simpleLog("Class: " + "App " + "Method: " + "onTerminate");
         unregisterReceiver(networkStateChangeReceiver);
         unbindService(mConnection);
         musicService.stopSelf();
@@ -101,7 +107,6 @@ public class App extends Application {
             try {
                 MusicServiceStream.MediaPlayerBinder binder = (MusicServiceStream.MediaPlayerBinder) service;
                 musicService = binder.getService();
-                mBound = true;
             } catch (Exception e){
                 Utils.saveLog(e.getMessage());
             }
@@ -109,14 +114,14 @@ public class App extends Application {
 
         @Override
         public void onServiceDisconnected(ComponentName arg0) {
-            mBound = false;
+
         }
     };
 
     class NetworkChangerReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(final Context context, final Intent intent) {
-            Utils.simpleLog("network change");
+            Utils.saveLog("change network state " + Utils.getNetworkState());
             if (musicService!=null) musicService.restoreNetwork();
         }
     }

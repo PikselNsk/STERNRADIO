@@ -1,12 +1,14 @@
 package info.javaway.sternradio.view;
 
 import android.Manifest;
+import android.app.NotificationManager;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 
 import com.gauravk.audiovisualizer.visualizer.BarVisualizer;
@@ -28,15 +30,21 @@ import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.presenter.RootPresenter;
+import info.javaway.sternradio.service.NotificationHelper;
+import info.javaway.sternradio.storage.ConstantStorage;
+import info.javaway.sternradio.view.dialog.InfoDialog;
+import info.javaway.sternradio.view.dialog.SettingsDialog;
 
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import static info.javaway.sternradio.service.MusicServiceStream.ACTION_CLOSE;
 import static info.javaway.sternradio.service.MusicServiceStream.ACTION_PAUSE;
 import static info.javaway.sternradio.service.MusicServiceStream.ACTION_PAUSE_CANCEL;
+import static info.javaway.sternradio.service.NotificationHelper.STERN_NOTIFICATION_ID;
 
 public class RootActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
@@ -52,6 +60,7 @@ public class RootActivity extends AppCompatActivity
     private AVLoadingIndicatorView avi;
     private ImageView playButtonIv;
     private PlayerChangerReceiver playerStateChangeReceiver;
+    private long back_pressed;
 
 
     @Override
@@ -66,8 +75,8 @@ public class RootActivity extends AppCompatActivity
         barVisualizer = findViewById(R.id.bar_visualiser);
         playButtonIv = findViewById(R.id.play_btn_iv);
         avi = findViewById(R.id.avi);
-        setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+//        setSupportActionBar(toolbar);
+//        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
 
         presenter = RootPresenter.getInstance();
@@ -83,6 +92,7 @@ public class RootActivity extends AppCompatActivity
         playButtonIv.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Utils.saveLog("Class: " + "RootActivity " + "Method: " + "onClick");
                 presenter.clickOnPlayButton();
             }
         });
@@ -107,15 +117,39 @@ public class RootActivity extends AppCompatActivity
                 playerFilter);
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        Utils.simpleLog("Class: " + "RootActivity " + "Method: " + "onPause");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Utils.simpleLog("Class: " + "RootActivity " + "Method: " + "onStop");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        presenter.onResume();
+        Utils.simpleLog("Class: " + "RootActivity " + "Method: " + "onResume");
+    }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-        if (barVisualizer != null)
-            barVisualizer.release();
+        Utils.saveLog("Class: " + "RootActivity " + "Method: " + "onDestroy");
+        Utils.simpleLog("Class: " + "RootActivity " + "Method: " + "onDestroy");
+        NotificationManager notificationManager =
+                (NotificationManager) App.getContext().getSystemService(Context.NOTIFICATION_SERVICE);
+        notificationManager.cancel(STERN_NOTIFICATION_ID);
         presenter.dropView();
         LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(App.getContext());
         localBroadcastManager.unregisterReceiver(playerStateChangeReceiver);
+        if (barVisualizer != null) {
+            barVisualizer.release();
+        }
+        super.onDestroy();
     }
 
     @Override
@@ -124,7 +158,15 @@ public class RootActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+
+            if (back_pressed + 2000 > System.currentTimeMillis()) {
+                finish();
+                presenter.release();
+                System.exit(0);
+            } else {
+                Toast.makeText(this, "Нажмите \"назад\" для выхода", Toast.LENGTH_SHORT).show();
+            }
+            back_pressed = System.currentTimeMillis();
         }
     }
 
@@ -156,18 +198,38 @@ public class RootActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
+        if (id == R.id.nav_settings) {
+            new SettingsDialog().show(getSupportFragmentManager(), "Settings");
+        } else if (id == R.id.nav_info) {
+            InfoDialog infoDialog = new InfoDialog();
+            Bundle args = new Bundle();
+            args.putString(ConstantStorage.INFO_TEXT, ConstantStorage.ABOUT_RADIO_TEXT);
+            infoDialog.setArguments(args);
+            infoDialog.show(getSupportFragmentManager(), "About radio");
         } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+            Intent i = new Intent(Intent.ACTION_SEND);
+            i.setType("text/plain");
+            i.putExtra(Intent.EXTRA_TEXT, "Sternradio"
+                    + "\n"
+                    + "https://play.google.com/store/apps/details?id=info.javaway.sternradio");
+            startActivity(Intent.createChooser(i, "Share Sternradio"));
+        } else if (id == R.id.nav_email) {
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO, Uri.fromParts(
+                    "mailto", "goodalarmclock@gmail.com", null));
+            emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Sternradio");
+            emailIntent.putExtra(Intent.EXTRA_TEXT, "");
+            startActivity(Intent.createChooser(emailIntent, "Send email to Sternradio"));
+        } else if (id == R.id.nav_www){
+            String url = "http://sternradio.ru/";
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            startActivity(i);
+        } else if (id == R.id.nav_beta){
+            InfoDialog infoDialog = new InfoDialog();
+            Bundle args = new Bundle();
+            args.putString(ConstantStorage.INFO_TEXT, ConstantStorage.BETA_VERSION_TEXT);
+            infoDialog.setArguments(args);
+            infoDialog.show(getSupportFragmentManager(), "Beta info");
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

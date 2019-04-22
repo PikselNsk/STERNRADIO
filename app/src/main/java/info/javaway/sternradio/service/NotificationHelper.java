@@ -26,6 +26,7 @@ public class NotificationHelper {
     private static final String CHANNEL_ID_1 = "info.javaway.CHANNEL_ID_1";
     private static final String CHANNEL_ID_2 = "info.javaway.CHANNEL_ID_2";
     public static final int STERN_NOTIFICATION_ID = 45315;
+    private static NotificationCompat.Builder notificationBuilder;
 
     public static void sendNotification(
             Context ctx,
@@ -35,6 +36,7 @@ public class NotificationHelper {
             String subtext,
             Intent intent,
             boolean isPause) {
+        Utils.saveLog("Class: " + "NotificationHelper " + "Method: " + "sendNotification");
         try {
 
             NotificationManager notificationManager =
@@ -50,30 +52,24 @@ public class NotificationHelper {
                 notificationChannel.setDescription("Sternradio");
                 notificationChannel.enableLights(false);
                 notificationChannel.setSound(null, null);
-                notificationChannel.setLightColor(Color.RED);
-                notificationChannel.setVibrationPattern(new long[]{0, 1000, 500, 1000});
                 notificationChannel.enableVibration(false);
                 notificationManager.createNotificationChannel(notificationChannel);
+
+                notificationBuilder = new
+                        NotificationCompat.Builder(ctx, CHANNEL_ID_1);
+            } else {
+                notificationBuilder = new
+                        NotificationCompat.Builder(ctx);
             }
 
 
-            NotificationCompat.Builder notificationBuilder = new
-                    NotificationCompat.Builder(ctx, CHANNEL_ID_1);
-
-
-            notificationBuilder.setAutoCancel(false)
-                    .setOngoing(true)
-                    .setSound(null)
-                    .setSound(null, AudioManager.STREAM_NOTIFICATION)
-                    .setDefaults(Notification.DEFAULT_ALL)
-                    .setWhen(System.currentTimeMillis())
-                    .setSmallIcon(R.mipmap.ic_launcher)
-                    .setTicker("Ticker")
-                    .setPriority(NotificationCompat.PRIORITY_LOW)
-                    //     .setPriority(Notification.PRIORITY_MAX)
+            notificationBuilder
                     .setContentTitle("Sternradio")
                     .setContentText("Live Stream")
-                    .setContentInfo("Info sternradio");
+                    .setAutoCancel(false)
+                    .setOngoing(true)
+                    .setSound(null)
+                    .setSmallIcon(R.mipmap.ic_launcher);
 
             if (isPause) {
                 notificationBuilder.addAction(generateAction(android.R.drawable.ic_media_play, "Play", NotificationControlService.ACTION_PAUSE_CANCEL));
