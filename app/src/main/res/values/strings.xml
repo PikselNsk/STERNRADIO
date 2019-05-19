@@ -29,4 +29,5 @@
     <string name="about_radio">О нас</string>
     <string name="settings">Настройки</string>
     <string name="communicate">Взаимодействие</string>
+    <string name="alarm_clock">Будильник</string>
 </resources>
