@@ -10,8 +10,9 @@ import java.util.Calendar;
 
 import info.javaway.sternradio.App;
 import info.javaway.sternradio.model.Alarm;
+import info.javaway.sternradio.service.WakeUpBroadcastReciever;
+import info.javaway.sternradio.storage.ConstantStorage;
 import info.javaway.sternradio.view.RootActivity;
-import info.javaway.sternradio.view.WakeupActivity;
 
 public class SignalManager {
 
@@ -43,12 +44,14 @@ public class SignalManager {
 
         Calendar calendarCurrent = Calendar.getInstance();
 
-        Intent intentMainAlarm = new Intent(App.getContext(), WakeupActivity.class);
+        Intent intentMainAlarm = new Intent(App.getContext(), RootActivity.class);
         intentMainAlarm.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND).
                 addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).
                 setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                         | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intentMainAlarm.setAction(ConstantStorage.ACTION_ALARM);
+
 
         PendingIntent pendingIntentForMainAlarm = PendingIntent.getActivity(
                 App.getContext(), ID_STERN,
@@ -62,7 +65,7 @@ public class SignalManager {
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
 
-        Intent intentForBroadcast = new Intent(App.getContext(), WakeupActivity.class);
+        Intent intentForBroadcast = new Intent(App.getContext(), WakeUpBroadcastReciever.class);
         intentForBroadcast.setAction(STERNRADIO_ACTION_ALARM_FIRE);
         intentForBroadcast.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND).
@@ -133,10 +136,11 @@ public class SignalManager {
     }
 
 
-    private void cancelAlarm() {
+    public void cancelAlarm() {
         Intent intent;
         PendingIntent pendingIntent;
-        intent = new Intent(App.getContext(), WakeupActivity.class);
+        intent = new Intent(App.getContext(), RootActivity.class);
+        intent.setAction(ConstantStorage.ACTION_ALARM);
         intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
 
@@ -176,7 +180,7 @@ public class SignalManager {
                 PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        Intent intentForBroadcastNew = new Intent(App.getContext(), WakeupActivity.class);
+        Intent intentForBroadcastNew = new Intent(App.getContext(), RootActivity.class);
         intentForBroadcastNew.setAction(STERNRADIO_ACTION_ALARM_FIRE);
         intentForBroadcastNew.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND).

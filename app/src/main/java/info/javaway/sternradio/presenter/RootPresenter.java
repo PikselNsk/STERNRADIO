@@ -10,11 +10,16 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.SystemClock;
 
+import java.util.Calendar;
+
 import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.handler.MusicHandler;
 import info.javaway.sternradio.handler.MusicInfoHelper;
+import info.javaway.sternradio.handler.PrefManager;
+import info.javaway.sternradio.handler.SignalManager;
+import info.javaway.sternradio.model.Alarm;
 import info.javaway.sternradio.service.MusicServiceStream;
 import info.javaway.sternradio.service.NotificationHelper;
 
@@ -29,6 +34,7 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
     private TrackInfoUpdater trackInfoUpdater;
     private String currentTrackInfo;
     private boolean isPause;
+    private Alarm alarm;
 
     public static RootPresenter getInstance() {
         Utils.saveLog("Class: " + "RootPresenter " + "Method: " + "getInstance " + (instance == null));
@@ -49,6 +55,7 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
                 Service.BIND_AUTO_CREATE);
         trackInfoUpdater = new TrackInfoUpdater("TrackInfoUpdater");
         trackInfoUpdater.start();
+        alarm = Alarm.getInstance();
     }
 
     public void takeView(View view) {
@@ -85,8 +92,12 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
                 view.hideLoading();
             }
         }
-
-
+        if (PrefManager.isCheckedAlarm()) {
+            view.showDescribeAlarm(App.getContext().getString(R.string.alarm_clock) + " " +
+                    Utils.getStringAlarm(App.getContext(), alarm, false));
+        } else {
+            view.showDescribeAlarm(App.getContext().getString(R.string.alarm_clock));
+        }
     }
 
     public void dropView() {
@@ -198,6 +209,85 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
                 isPause);
     }
 
+    public void switchAlarm(boolean isChecked) {
+        PrefManager.setCheckedAlarm(isChecked);
+        if (isChecked) {
+            SignalManager.getInstance(App.getContext()).setAlarm(alarm);
+            view.showDescribeAlarm(App.getContext().getString(R.string.alarm_clock) + " " +
+                    Utils.getStringAlarm(App.getContext(), alarm, false));
+            view.showMessage(Utils.getDeltaTimeBeforeRing(alarm));
+
+        } else {
+            SignalManager.getInstance(App.getContext()).cancelAlarm();
+            view.showDescribeAlarm(App.getContext().getString(R.string.alarm_clock));
+            view.showMessage(App.getContext().getString(R.string.alarm_off));
+
+        }
+    }
+
+    public void settingAlarm() {
+        cancelOrContinue();
+    }
+
+    private boolean cancelOrContinue() {
+        if (!alarm.isSingleAlarm()) {
+            SignalManager.getInstance(App.getContext()).setAlarm(alarm);
+        } else {
+            SignalManager.getInstance(App.getContext()).cancelAlarm();
+            PrefManager.setCheckedAlarm(false);
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        if (alarm.isSingleAlarm()) return true;
+        switch (dayOfWeek) {
+            case 1: {
+                if (alarm.isSunday()) {
+                    break;
+                }
+                return false;
+            }
+            case 2: {
+                if (alarm.isMonday()) {
+                    break;
+                }
+                return false;
+            }
+            case 3: {
+                if (alarm.isTuesday()) {
+                    break;
+                }
+                return false;
+            }
+            case 4: {
+                if (alarm.isWednesday()) {
+                    break;
+                }
+                return false;
+            }
+            case 5: {
+                if (alarm.isThursday()) {
+                    break;
+                }
+                return false;
+            }
+            case 6: {
+                if (alarm.isFriday()) {
+                    break;
+                }
+                return false;
+            }
+            case 7: {
+                if (alarm.isSaturday()) {
+                    break;
+                }
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     public interface View {
         void showError(String messageError);
 
@@ -216,6 +306,9 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
         void showPlayButton();
 
         void showPauseButton();
+
+        void showDescribeAlarm(String text);
+
     }
 
     public void release() {

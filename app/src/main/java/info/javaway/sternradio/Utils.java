@@ -38,12 +38,15 @@ import java.io.PrintWriter;
 import java.lang.ref.WeakReference;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
+import info.javaway.sternradio.model.Alarm;
 
 public class Utils {
 
@@ -116,8 +119,6 @@ public class Utils {
         String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
         return Uri.parse(path);
     }
-
-
 
 
     public static SimpleDateFormat getDateFormat() {
@@ -304,7 +305,112 @@ public class Utils {
         }
     }
 
-    public static void clearTempFolder() {
+    public static String getStringAlarm(Context context, Alarm alarm, boolean fullDescribe) {
+        StringBuilder text = new StringBuilder();
+        int i = alarm.getMinute();
+        text.append(alarm.getHour()).append(":");
+        if (i > 9) {
+            text.append(alarm.getMinute());
+        } else {
+            text.append("0").append(alarm.getMinute());
+        }
+
+        if (fullDescribe && !alarm.isSingleAlarm()) {
+            text
+                    .append(" ( ")
+                    .append(alarm.isMonday() ? App.getContext().getString(R.string.monday) : "--")
+                    .append(" ")
+                    .append(alarm.isTuesday() ? App.getContext().getString(R.string.tuesday) : "--")
+                    .append(" ")
+                    .append(alarm.isWednesday() ? App.getContext().getString(R.string.wednesday) : "--")
+                    .append(" ")
+                    .append(alarm.isThursday() ? App.getContext().getString(R.string.thursday) : "--")
+                    .append(" ")
+                    .append(alarm.isFriday() ? App.getContext().getString(R.string.friday) : "--")
+                    .append(" ")
+                    .append(alarm.isSaturday() ? App.getContext().getString(R.string.saturday) : "--")
+                    .append(" ")
+                    .append(alarm.isSunday() ? App.getContext().getString(R.string.sunday) : "--")
+                    .append(" )");
+        }
+        return text.toString();
+    }
+
+    public static String convertPathToName(String path) {
+        String[] strings = path.split("/");
+        return strings[strings.length - 1] == null ? path : strings[strings.length - 1];
+    }
+
+    public static String getFormatTime(Alarm alarm) {
+        int i = alarm.getMinute();
+        String time = "";
+        time = alarm.getHour() + ":";
+        if (i > 9) {
+            time = time + alarm.getMinute();
+        } else {
+            time = time + "0" + alarm.getMinute();
+        }
+
+
+        return time;
+    }
+
+    public static String getDeltaTimeBeforeRing(Alarm alarm) {
+        int[] delta = deltaTime(alarm);
+        Calendar calendar = Calendar.getInstance();
+        Date date = new Date();
+        calendar.setTime(date);
+        calendar.add(Calendar.HOUR_OF_DAY, delta[0]);
+        calendar.add(Calendar.MINUTE, delta[1]);
+        int dayOfRing = calendar.get(Calendar.DAY_OF_WEEK);
+
+        int ringAfterDaysCount = alarm.isSingleAlarm() ? 0 : alarm.checkEnableDay(dayOfRing, 0);
+
+        StringBuilder textAlarm = new StringBuilder();
+
+        textAlarm.append(
+                App.getContext().getString(R.string.alarm_will_ring_in_an))
+                .append(" ")
+                .append(delta[0] + ringAfterDaysCount * 24)
+                .append(":");
+        if (delta[1] < 10) {
+            textAlarm.append("0")
+                    .append(delta[1]);
+        } else {
+            textAlarm.append(delta[1]);
+        }
+        return textAlarm.toString();
+    }
+
+    public static int[] deltaTime(Alarm alarm) {
+
+        Calendar c1 = Calendar.getInstance();
+        Calendar c2 = Calendar.getInstance();
+        c1.setTimeInMillis(System.currentTimeMillis());
+        c2.setTimeInMillis(System.currentTimeMillis());
+
+        c2.set(Calendar.SECOND, 10);
+
+        c1.set(Calendar.HOUR_OF_DAY, alarm.getHour());
+        c1.set(Calendar.MINUTE, alarm.getMinute());
+        c1.set(Calendar.SECOND, 0);
+
+        int h1 = c1.get(Calendar.HOUR_OF_DAY);
+        int m1 = c1.get(Calendar.MINUTE);
+        int h2 = c2.get(Calendar.HOUR_OF_DAY);
+        int m2 = c2.get(Calendar.MINUTE);
+
+        long delta = (h1 * 3_600_000 + m1 * 60_000) - ((h2 * 3_600_000 + m2 * 60_000));
+
+        if (c2.after(c1)) {
+            delta += 86_400_000;
+        }
+
+        int[] result = new int[2];
+        long minutes = delta % 3_600_000;
+        result[0] = (int) (delta / 3_600_000);
+        result[1] = (int) (minutes / 60_000);
+        return result;
 
     }
 }

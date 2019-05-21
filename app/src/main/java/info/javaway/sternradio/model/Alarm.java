@@ -7,6 +7,8 @@ import info.javaway.sternradio.handler.PrefManager;
 
 public class Alarm {
 
+    private static Alarm instance;
+
     private int hour;
     private int minute;
 
@@ -18,6 +20,38 @@ public class Alarm {
     private boolean saturday;
     private boolean sunday;
 
+    public static Alarm getInstance(){
+        if (instance == null){
+            instance = new Alarm(
+                    PrefManager.getHour(),
+                    PrefManager.getMinute(),
+                    PrefManager.getMonday(),
+                    PrefManager.getTuesday(),
+                    PrefManager.getWednesday(),
+                    PrefManager.getThursday(),
+                    PrefManager.getFriday(),
+                    PrefManager.getSaturday(),
+                    PrefManager.getSunday()
+            );
+        }
+        return instance;
+    }
+
+
+    public Alarm() {
+    }
+
+    public Alarm(int hour, int minute, boolean monday, boolean tuesday, boolean wednesday, boolean thursday, boolean friday, boolean saturday, boolean sunday) {
+        this.hour = hour;
+        this.minute = minute;
+        this.monday = monday;
+        this.tuesday = tuesday;
+        this.wednesday = wednesday;
+        this.thursday = thursday;
+        this.friday = friday;
+        this.saturday = saturday;
+        this.sunday = sunday;
+    }
 
     public boolean isSingleAlarm() {
         return (!isMonday() &&
@@ -143,5 +177,20 @@ public class Alarm {
 
     public void setSunday(boolean sunday) {
         this.sunday = sunday;
+    }
+
+    @Override
+    public String toString() {
+        return "Alarm{" +
+                "hour=" + hour +
+                ", minute=" + minute +
+                ", monday=" + monday +
+                ", tuesday=" + tuesday +
+                ", wednesday=" + wednesday +
+                ", thursday=" + thursday +
+                ", friday=" + friday +
+                ", saturday=" + saturday +
+                ", sunday=" + sunday +
+                '}';
     }
 }

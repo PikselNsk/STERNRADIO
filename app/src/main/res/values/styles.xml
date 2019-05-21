@@ -76,4 +76,40 @@
         <item name="android:textSize">@dimen/settings_subtitle</item>
         <item name="android:textColor">@color/colorText</item>
     </style>
+
+    <style name="TextViewSettings">
+        <item name="android:gravity">center</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">5</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center_horizontal</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textSize">@dimen/text_value_size_settings_alarm</item>
+    </style>
+
+    <style name="DaysText" parent="TextViewSettings">
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:paddingBottom">10dp</item>
+        <item name="android:paddingTop">10dp</item>
+        <item name="android:background">@drawable/day_off</item>
+        <item name="android:layout_margin">3dp</item>
+    </style>
+
+    <style name="ButtonChoiceStyle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@android:color/transparent</item>
+        <item name="android:padding">@dimen/alarm_settings_padding</item>
+        <item name="android:textColor">@color/colorText</item>
+        <item name="android:textSize">@dimen/textDialogSize</item>
+    </style>
+    <style name="TextAppearance">
+        <item name="android:ellipsize">end</item>
+        <item name="android:maxLines">3</item>
+    </style>
 </resources>

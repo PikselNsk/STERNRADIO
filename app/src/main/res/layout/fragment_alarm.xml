@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/colorBackground"
+    tools:context=".view.fragment.AlarmFragment">
+
+    <ImageView
+        android:id="@+id/logo_iv"
+        android:layout_width="120dp"
+        android:layout_height="60dp"
+        android:layout_marginLeft="@dimen/default_margin"
+        android:layout_marginTop="60dp"
+        android:src="@drawable/radio_logo" />
+
+    <LinearLayout
+        android:id="@+id/alarm_main_ll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_margin="8dp"
+        android:gravity="center">
+
+        <TextView
+            android:id="@+id/alarm_text"
+            android:layout_width="0dp"
+            android:layout_weight="3"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="hello"
+            android:textColor="@color/colorText"
+            android:textSize="80dp" />
+
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/days_container_ll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/alarm_main_ll"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/single_alarm_info_tv"
+            style="@style/DaysText"
+            android:text="@string/single_alarm" />
+
+        <TextView
+            android:id="@+id/monday_text_view"
+            style="@style/DaysText"
+            android:text="@string/monday" />
+
+        <TextView
+            android:id="@+id/tuesday_text_view"
+            style="@style/DaysText"
+            android:text="@string/tuesday" />
+
+        <TextView
+            android:id="@+id/wednesday_text_view"
+            style="@style/DaysText"
+            android:text="@string/wednesday" />
+
+        <TextView
+            android:id="@+id/thursday_text_view"
+            style="@style/DaysText"
+            android:text="@string/thursday" />
+
+        <TextView
+            android:id="@+id/friday_text_view"
+            style="@style/DaysText"
+            android:text="@string/friday" />
+
+        <TextView
+            android:id="@+id/saturday_text_view"
+            style="@style/DaysText"
+            android:text="@string/saturday" />
+
+        <TextView
+            android:id="@+id/sunday_text_view"
+            style="@style/DaysText"
+            android:text="@string/sunday" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true">
+
+        <TextView
+            android:id="@+id/cancel_tv"
+            style="@style/ButtonChoiceStyle"
+            android:text="@string/cancel" />
+
+        <TextView
+            android:id="@+id/ok_tv"
+            style="@style/ButtonChoiceStyle"
+            android:text="@string/set" />
+    </LinearLayout>
+
+</RelativeLayout>

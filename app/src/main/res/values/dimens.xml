@@ -9,4 +9,8 @@
     <dimen name="default_padding">8dp</dimen>
     <dimen name="settings_title">18dp</dimen>
     <dimen name="settings_subtitle">14dp</dimen>
+    <dimen name="text_value_size_settings_alarm">22sp</dimen>
+    <dimen name="alarm_settings_padding">8dp</dimen>
+    <dimen name="textDialogSize">18sp</dimen>
+
 </resources>

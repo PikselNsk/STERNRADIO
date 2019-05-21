@@ -17,6 +17,8 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import android.view.View;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
+import com.suke.widget.SwitchButton;
 import com.wang.avi.AVLoadingIndicatorView;
 
 import androidx.core.content.ContextCompat;
@@ -26,14 +28,17 @@ import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
+
 import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
+import info.javaway.sternradio.handler.PrefManager;
 import info.javaway.sternradio.presenter.RootPresenter;
 import info.javaway.sternradio.service.NotificationHelper;
 import info.javaway.sternradio.storage.ConstantStorage;
 import info.javaway.sternradio.view.dialog.InfoDialog;
 import info.javaway.sternradio.view.dialog.SettingsDialog;
+import info.javaway.sternradio.view.fragment.AlarmFragment;
 
 import android.view.Menu;
 import android.view.MenuItem;
@@ -48,6 +53,7 @@ import static info.javaway.sternradio.service.NotificationHelper.STERN_NOTIFICAT
 
 public class RootActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener,
+        AlarmFragment.OnFragmentInteractionListener,
         RootPresenter.View {
 
     public static final String UPDATE_PLAYER = "info.javaway.sternradio.UPDATE_PLAYER";
@@ -61,6 +67,8 @@ public class RootActivity extends AppCompatActivity
     private ImageView playButtonIv;
     private PlayerChangerReceiver playerStateChangeReceiver;
     private long back_pressed;
+    private SwitchButton switcher;
+    private MenuItem menuAlarmItem;
 
 
     @Override
@@ -68,6 +76,7 @@ public class RootActivity extends AppCompatActivity
         Utils.simpleLog("RootActivity onCreate Thread name : " + Thread.currentThread().getName());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         Utils.setAppCompatActivity(this);
         toolbar = findViewById(R.id.toolbar);
         trackNameTv = findViewById(R.id.track_name_tv);
@@ -75,26 +84,25 @@ public class RootActivity extends AppCompatActivity
         barVisualizer = findViewById(R.id.bar_visualiser);
         playButtonIv = findViewById(R.id.play_btn_iv);
         avi = findViewById(R.id.avi);
-//        setSupportActionBar(toolbar);
-//        getSupportActionBar().setDisplayShowTitleEnabled(false);
-
+        menuAlarmItem = ((NavigationView) findViewById(R.id.nav_view))
+                .getMenu()
+                .findItem(R.id.nav_alarm);
+        switcher = menuAlarmItem
+                .getActionView()
+                .findViewById(R.id.alarm_switcher);
 
         presenter = RootPresenter.getInstance();
         presenter.takeView(this);
-
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//
-//            }
-//        });
-        playButtonIv.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Utils.saveLog("Class: " + "RootActivity " + "Method: " + "onClick");
-                presenter.clickOnPlayButton();
+        if(getIntent().getAction() != null){
+            if (getIntent().getAction().equals(ConstantStorage.ACTION_ALARM)){
+                presenter.settingAlarm();
             }
+        }
+        switcher.setChecked(PrefManager.isCheckedAlarm());
+        switcher.setOnCheckedChangeListener((view, isChecked) -> presenter.switchAlarm(isChecked));
+        playButtonIv.setOnClickListener(v -> {
+            Utils.saveLog("Class: " + "RootActivity " + "Method: " + "onClick");
+            presenter.clickOnPlayButton();
         });
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -219,17 +227,22 @@ public class RootActivity extends AppCompatActivity
             emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Sternradio");
             emailIntent.putExtra(Intent.EXTRA_TEXT, "");
             startActivity(Intent.createChooser(emailIntent, "Send email to Sternradio"));
-        } else if (id == R.id.nav_www){
+        } else if (id == R.id.nav_www) {
             String url = "http://sternradio.ru/";
             Intent i = new Intent(Intent.ACTION_VIEW);
             i.setData(Uri.parse(url));
             startActivity(i);
-        } else if (id == R.id.nav_beta){
+        } else if (id == R.id.nav_beta) {
             InfoDialog infoDialog = new InfoDialog();
             Bundle args = new Bundle();
             args.putString(ConstantStorage.INFO_TEXT, ConstantStorage.BETA_VERSION_TEXT);
             infoDialog.setArguments(args);
             infoDialog.show(getSupportFragmentManager(), "Beta info");
+        } else if (id == R.id.nav_alarm) {
+            AlarmFragment alarmFragment = AlarmFragment.newInstance("", "");
+            getSupportFragmentManager().beginTransaction()
+                    .add(R.id.fragment_container, alarmFragment)
+                    .commit();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -244,7 +257,8 @@ public class RootActivity extends AppCompatActivity
 
     @Override
     public void showMessage(String message) {
-
+        Snackbar.make(findViewById(R.id.drawer_layout), message,
+                Snackbar.LENGTH_LONG).show();
     }
 
     @Override
@@ -274,7 +288,11 @@ public class RootActivity extends AppCompatActivity
     public void initialVisualBar() {
         int audioSessionId = presenter.getMediaPlayer().getAudioSessionId();
         if (audioSessionId != -1) {
-            barVisualizer.setAudioSessionId(audioSessionId);
+            try {
+                barVisualizer.setAudioSessionId(audioSessionId);
+            } catch (IllegalStateException ex) {
+                Utils.saveLog(ex.getMessage());
+            }
         }
     }
 
@@ -287,6 +305,17 @@ public class RootActivity extends AppCompatActivity
     public void showPauseButton() {
         playButtonIv.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pause));
 
+    }
+
+    @Override
+    public void showDescribeAlarm(String text) {
+        menuAlarmItem.setTitle(text);
+    }
+
+    @Override
+    public void alarmSwitch(boolean isSwitch) {
+        switcher.setChecked(isSwitch);
+        presenter.switchAlarm(isSwitch);
     }
 
 
@@ -304,15 +333,15 @@ public class RootActivity extends AppCompatActivity
                     hideLoading();
                     break;
                 }
-                case ACTION_PAUSE:{
+                case ACTION_PAUSE: {
                     presenter.clickOnPlayButton();
                     break;
                 }
-                case ACTION_PAUSE_CANCEL :{
+                case ACTION_PAUSE_CANCEL: {
                     presenter.clickOnPlayButton();
                     break;
                 }
-                case ACTION_CLOSE:{
+                case ACTION_CLOSE: {
                     finish();
 
                     presenter.release();
