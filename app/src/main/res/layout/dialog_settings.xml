@@ -40,6 +40,37 @@
                     </LinearLayout>
                 </LinearLayout>
             </LinearLayout>
+            <include layout="@layout/separator_white" />
+
+            <LinearLayout
+                android:id="@+id/container_dont_call_alarm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/dont_call_alarm_text_view"
+                    style="@style/TextViewSettings"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center|center_horizontal"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="5"
+                    android:gravity="center_vertical"
+                    android:text="@string/dont_call_alarms" />
+
+                <ImageView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_margin="8dp"
+                    android:layout_weight="1"
+                    android:src="@drawable/battery" />
+            </LinearLayout>
+
+            <include layout="@layout/safe_mode_instructions" />
+
+
         </LinearLayout>
     </ScrollView>
 

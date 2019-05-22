@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,11 +22,17 @@ import androidx.core.content.ContextCompat;
 import info.javaway.sternradio.App;
 import info.javaway.sternradio.BuildConfig;
 import info.javaway.sternradio.R;
+import info.javaway.sternradio.Utils;
+import info.javaway.sternradio.handler.PrefManager;
+import info.javaway.sternradio.handler.SignalManager;
+import info.javaway.sternradio.model.Alarm;
+import info.javaway.sternradio.storage.ConstantStorage;
 
 public class SplashActivity extends AppCompatActivity {
 
     TextView infoText;
     Button grantedPermissionsButton;
+    private Alarm alarm;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -33,6 +40,21 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
         infoText = findViewById(R.id.info_text);
         grantedPermissionsButton = findViewById(R.id.granted_perm_btn);
+
+        Intent intent = getIntent();
+        if (intent != null && intent.getAction() != null){
+            if(intent.getAction().equals(ConstantStorage.ACTION_ALARM)){
+                if(cancelOrContinue()){
+                    if(!Utils.getNetworkState()){
+                        startFakeMelodyScreen();
+                    } else {
+                        startRootScreen();
+                    }
+                }
+                finish();
+                return;
+            }
+        }
 
         boolean b1 = (ContextCompat.checkSelfPermission(App.getContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED);
@@ -59,6 +81,16 @@ public class SplashActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void startFakeMelodyScreen() {
+Intent intent = new Intent(App.getContext(), FakeMelodyActivity.class);
+        intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).
+                addFlags(Intent.FLAG_RECEIVER_FOREGROUND).
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).
+                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
     }
 
     private void startRootScreen() {
@@ -117,5 +149,64 @@ public class SplashActivity extends AppCompatActivity {
             Toast.makeText(SplashActivity.this, "Some Permission is Denied", Toast.LENGTH_SHORT)
                     .show();
         }
+    }
+
+    private boolean cancelOrContinue() {
+        alarm = Alarm.getInstance();
+        if (!alarm.isSingleAlarm()) {
+            SignalManager.getInstance(App.getContext()).setAlarm(alarm);
+        } else {
+            SignalManager.getInstance(App.getContext()).cancelAlarm();
+            PrefManager.setCheckedAlarm(false);
+        }
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        if (alarm.isSingleAlarm()) return true;
+        switch (dayOfWeek) {
+            case 1: {
+                if (alarm.isSunday()) {
+                    break;
+                }
+                return false;
+            }
+            case 2: {
+                if (alarm.isMonday()) {
+                    break;
+                }
+                return false;
+            }
+            case 3: {
+                if (alarm.isTuesday()) {
+                    break;
+                }
+                return false;
+            }
+            case 4: {
+                if (alarm.isWednesday()) {
+                    break;
+                }
+                return false;
+            }
+            case 5: {
+                if (alarm.isThursday()) {
+                    break;
+                }
+                return false;
+            }
+            case 6: {
+                if (alarm.isFriday()) {
+                    break;
+                }
+                return false;
+            }
+            case 7: {
+                if (alarm.isSaturday()) {
+                    break;
+                }
+                return false;
+            }
+        }
+        return true;
     }
 }

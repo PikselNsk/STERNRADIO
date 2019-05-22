@@ -50,7 +50,6 @@ import info.javaway.sternradio.model.Alarm;
 
 public class Utils {
 
-    public static boolean getNetworkState;
     private static SimpleDateFormat dateFormat;
     private static Date date = new Date();
     private static int cardColor;
@@ -306,6 +305,9 @@ public class Utils {
     }
 
     public static String getStringAlarm(Context context, Alarm alarm, boolean fullDescribe) {
+        if(alarm == null){
+            alarm = Alarm.getInstance();
+        }
         StringBuilder text = new StringBuilder();
         int i = alarm.getMinute();
         text.append(alarm.getHour()).append(":");

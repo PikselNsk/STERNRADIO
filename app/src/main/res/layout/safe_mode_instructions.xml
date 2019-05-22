@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<net.cachapa.expandablelayout.ExpandableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/instructions_life_alarm_el"
+    style="@style/ExpandableLayoutStyle"
+    android:layout_width="match_parent">
+
+    <LinearLayout
+        android:id="@+id/instructions_life_alarm_ll"
+        style="@style/innerContainerExtandableLayoutLinearLayout">
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            style="@style/infoText"
+            android:text="@string/instruction_life_alarm" />
+
+        <TextView
+            android:id="@+id/open_battery_settings_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/open_battery_settings"
+            android:visibility="gone" />
+
+        <TextView
+            style="@style/infoText"
+            android:text="@string/info_manufactures" />
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/xiaomi_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/xiaomi" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/xiaomi_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/xiaomi_info_ll"
+                    style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                    <TextView
+                        style="@style/infoText"
+                        android:text="@string/xiaomi_info" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/xiaomi_autostart_ll"
+                    android:visibility="gone"
+                    style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                    <TextView
+                        style="@style/infoText"
+                        android:gravity="center"
+                        android:text="@string/autostart"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/samsung_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/samsung" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/samsung_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/samsung_info_ll"
+                    style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                    <TextView
+                        style="@style/infoText"
+                        android:text="@string/samsung_info" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/samsung_unmonitored_ll"
+                    android:visibility="gone"
+                    style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                    <TextView
+                        style="@style/infoText"
+                        android:gravity="center"
+                        android:text="@string/unmonitored_apps"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/huawei_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/huawei" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/huawei_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:id="@+id/huawei_info_ll"
+                    style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                    <TextView
+                        style="@style/infoText"
+                        android:text="@string/huawei_info" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/huawei_protected_ll"
+                    android:visibility="gone"
+                    style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                    <TextView
+                        style="@style/infoText"
+                        android:gravity="center"
+                        android:text="@string/protected_apps"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/oppo_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/oppo" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/oppo_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:id="@+id/oppo_info_ll"
+                style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                <TextView
+                    style="@style/infoText"
+                    android:text="@string/oppo_info" />
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/asus_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/asus" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/asus_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:id="@+id/asus_info_ll"
+                style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                <TextView
+                    style="@style/infoText"
+                    android:text="@string/asus_info" />
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/oneplus_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/oneplus" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/oneplus_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:id="@+id/oneplus_info_ll"
+                style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                <TextView
+                    style="@style/infoText"
+                    android:text="@string/oneplus_info" />
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/lenovo_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/lenovo" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/lenovo_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:id="@+id/lenovo_info_ll"
+                style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                <TextView
+                    style="@style/infoText"
+                    android:text="@string/lenovo_info" />
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/xperia_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/xperia" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/xperia_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:id="@+id/xperia_info_ll"
+                style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                <TextView
+                    style="@style/infoText"
+                    android:text="@string/xperia_info" />
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+
+        <include layout="@layout/separator_white" />
+
+        <TextView
+            android:id="@+id/other_tv"
+            style="@style/infoText.centerBold"
+            android:text="@string/other" />
+
+        <net.cachapa.expandablelayout.ExpandableLayout
+            android:id="@+id/other_info_el"
+            style="@style/ExpandableLayoutStyle">
+
+            <LinearLayout
+                android:id="@+id/other_info_ll"
+                style="@style/innerContainerExtandableLayoutLinearLayout">
+
+                <TextView
+                    style="@style/infoText"
+                    android:text="@string/other_info" />
+            </LinearLayout>
+        </net.cachapa.expandablelayout.ExpandableLayout>
+    </LinearLayout>
+</net.cachapa.expandablelayout.ExpandableLayout>

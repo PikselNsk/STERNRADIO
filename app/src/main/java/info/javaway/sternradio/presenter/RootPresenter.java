@@ -5,9 +5,7 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaPlayer;
-import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
 import android.os.SystemClock;
 
 import java.util.Calendar;
@@ -15,7 +13,6 @@ import java.util.Calendar;
 import info.javaway.sternradio.App;
 import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
-import info.javaway.sternradio.handler.MusicHandler;
 import info.javaway.sternradio.handler.MusicInfoHelper;
 import info.javaway.sternradio.handler.PrefManager;
 import info.javaway.sternradio.handler.SignalManager;
@@ -23,7 +20,7 @@ import info.javaway.sternradio.model.Alarm;
 import info.javaway.sternradio.service.MusicServiceStream;
 import info.javaway.sternradio.service.NotificationHelper;
 
-public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeStateTrackListener {
+public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeStateTrackListener, SignalManager.OnChangeAlarmListener {
 
     private static RootPresenter instance;
 
@@ -56,9 +53,12 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
         trackInfoUpdater = new TrackInfoUpdater("TrackInfoUpdater");
         trackInfoUpdater.start();
         alarm = Alarm.getInstance();
+        SignalManager.getInstance(App.getContext()).registerListener(this);
     }
 
     public void takeView(View view) {
+        Utils.simpleLog("RootPresenter takeView ");
+
         this.view = view;
         if (musicService == null) {
             if (Utils.getNetworkState()) {
@@ -92,6 +92,7 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
                 view.hideLoading();
             }
         }
+
         if (PrefManager.isCheckedAlarm()) {
             view.showDescribeAlarm(App.getContext().getString(R.string.alarm_clock) + " " +
                     Utils.getStringAlarm(App.getContext(), alarm, false));
@@ -172,18 +173,20 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
     }
 
     public void clickOnPlayButton() {
+        Utils.simpleLog("RootPresenter clickOnPlayButton " + view);
+
         Utils.saveLog("Class: " + "RootPresenter " + "Method: " + "clickOnPlayButton" +
                 " Utils.getNetworkState() " + Utils.getNetworkState());
         if (!Utils.getNetworkState()) return;
         isPause = musicService.playerIsPlay();
         if (!musicService.playerIsPlay()) {
             musicService.mute(false);
-            view.showPlayButton();
+            view.showPauseButton();
         } else {
             musicService.mute(true);
-            view.showPauseButton();
+            view.showPlayButton();
         }
-        NotificationHelper.sendNotification(App.getContext(),
+        NotificationHelper.sendNotificationToManagment(App.getContext(),
                 "",
                 0,
                 null,
@@ -199,7 +202,7 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
     }
 
     public void onResume() {
-        NotificationHelper.sendNotification(
+        NotificationHelper.sendNotificationToManagment(
                 App.getContext(),
                 "",
                 0,
@@ -225,66 +228,14 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
         }
     }
 
-    public void settingAlarm() {
-        cancelOrContinue();
-    }
 
-    private boolean cancelOrContinue() {
-        if (!alarm.isSingleAlarm()) {
-            SignalManager.getInstance(App.getContext()).setAlarm(alarm);
-        } else {
-            SignalManager.getInstance(App.getContext()).cancelAlarm();
-            PrefManager.setCheckedAlarm(false);
+
+    @Override
+    public void changeAlarm() {
+        if (view != null){
+            view.cancelAlarm();
+            view.showDescribeAlarm(App.getContext().getString(R.string.alarm_clock));
         }
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-        if (alarm.isSingleAlarm()) return true;
-        switch (dayOfWeek) {
-            case 1: {
-                if (alarm.isSunday()) {
-                    break;
-                }
-                return false;
-            }
-            case 2: {
-                if (alarm.isMonday()) {
-                    break;
-                }
-                return false;
-            }
-            case 3: {
-                if (alarm.isTuesday()) {
-                    break;
-                }
-                return false;
-            }
-            case 4: {
-                if (alarm.isWednesday()) {
-                    break;
-                }
-                return false;
-            }
-            case 5: {
-                if (alarm.isThursday()) {
-                    break;
-                }
-                return false;
-            }
-            case 6: {
-                if (alarm.isFriday()) {
-                    break;
-                }
-                return false;
-            }
-            case 7: {
-                if (alarm.isSaturday()) {
-                    break;
-                }
-                return false;
-            }
-        }
-        return true;
     }
 
 
@@ -309,6 +260,7 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
 
         void showDescribeAlarm(String text);
 
+        void cancelAlarm();
     }
 
     public void release() {
@@ -318,6 +270,7 @@ public class RootPresenter implements ServiceConnection, MusicInfoHelper.ChangeS
         App.getContext().unbindService(this);
         musicService.close();
         trackInfoUpdater.interrupt();
+        SignalManager.getInstance(App.getContext()).unRegisterListener(this);
     }
 
     public class TrackInfoUpdater extends Thread {

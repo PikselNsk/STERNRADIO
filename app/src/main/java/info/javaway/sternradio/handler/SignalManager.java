@@ -6,30 +6,43 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import info.javaway.sternradio.App;
 import info.javaway.sternradio.model.Alarm;
+import info.javaway.sternradio.service.NotificationHelper;
 import info.javaway.sternradio.service.WakeUpBroadcastReciever;
 import info.javaway.sternradio.storage.ConstantStorage;
-import info.javaway.sternradio.view.RootActivity;
+import info.javaway.sternradio.view.SplashActivity;
 
 public class SignalManager {
 
-    public static final int SHIFT_ID_FOR_BACKUP_INTENT = 333;
+    private static final int SHIFT_ID_FOR_BACKUP_INTENT = 333;
     private static final int SHIFT_ID_FOR_BROADCAST_INTENT = 34834;
     private static final long SHIFT_TIME_BROADCAST = 5_000;
     private static final long SHIFT_TIME_BROADCAST_SET_ALARM_CLOCK = 17_000;
     private static final int SHIFT_ID_FOR_SETALARMCLOCK_BROADCAST_INTENT = 3245;
     private static final int ID_STERN = 666;
     private static final long SHIFT_TIME = 10_000;
-    public static final String STERNRADIO_ACTION_ALARM_FIRE = "sternradio.ACTION_ALARM_FIRE";
+    private static final String STERNRADIO_ACTION_ALARM_FIRE = "sternradio.ACTION_ALARM_FIRE";
+    private List<OnChangeAlarmListener> mListeners = new ArrayList<>();
 
     private AlarmManager mAlarmManager;
     private static SignalManager instance;
 
-    public SignalManager(Context context) {
+    public interface OnChangeAlarmListener {
+        void changeAlarm();
+    }
+    private SignalManager(Context context) {
         mAlarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+    }
+    public void registerListener(OnChangeAlarmListener listener) {
+        mListeners.add(listener);
+    }
+    public void unRegisterListener(OnChangeAlarmListener listener) {
+        mListeners.remove(listener);
     }
 
     public static SignalManager getInstance(Context context) {
@@ -41,15 +54,15 @@ public class SignalManager {
 
 
     public void setAlarm(Alarm alarm) {
-
+        NotificationHelper.sendNotificationToAlarm(App.getContext());
         Calendar calendarCurrent = Calendar.getInstance();
 
-        Intent intentMainAlarm = new Intent(App.getContext(), RootActivity.class);
+        Intent intentMainAlarm = new Intent(App.getContext(), SplashActivity.class);
         intentMainAlarm.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND).
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).
-                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         intentMainAlarm.setAction(ConstantStorage.ACTION_ALARM);
 
 
@@ -69,9 +82,9 @@ public class SignalManager {
         intentForBroadcast.setAction(STERNRADIO_ACTION_ALARM_FIRE);
         intentForBroadcast.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND).
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).
-                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         PendingIntent sendBroadcastMainAlarmPendingIntent = PendingIntent.getBroadcast(
                 App.getContext(),
@@ -102,7 +115,7 @@ public class SignalManager {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             //интент для открытия экрана при надатии значка будильника
-            Intent openMainScreenAlarmIntent = new Intent(App.getContext(), RootActivity.class);
+            Intent openMainScreenAlarmIntent = new Intent(App.getContext(), SplashActivity.class);
 
             PendingIntent openMainScreenPendingIntent = PendingIntent.getActivity(
                     App.getContext(),
@@ -137,9 +150,14 @@ public class SignalManager {
 
 
     public void cancelAlarm() {
+        for (OnChangeAlarmListener listener : mListeners) {
+            listener.changeAlarm();
+        }
+        NotificationHelper.clearNotificationAlarm();
+
         Intent intent;
         PendingIntent pendingIntent;
-        intent = new Intent(App.getContext(), RootActivity.class);
+        intent = new Intent(App.getContext(), SplashActivity.class);
         intent.setAction(ConstantStorage.ACTION_ALARM);
         intent.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
         intent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
@@ -161,9 +179,9 @@ public class SignalManager {
         intentForBroadcast.setAction(STERNRADIO_ACTION_ALARM_FIRE);
         intentForBroadcast.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND).
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).
-                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
 
         PendingIntent sendBroadcastMainAlarm = PendingIntent.getBroadcast(
                 App.getContext(),
@@ -180,13 +198,13 @@ public class SignalManager {
                 PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        Intent intentForBroadcastNew = new Intent(App.getContext(), RootActivity.class);
+        Intent intentForBroadcastNew = new Intent(App.getContext(), SplashActivity.class);
         intentForBroadcastNew.setAction(STERNRADIO_ACTION_ALARM_FIRE);
         intentForBroadcastNew.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES).
                 addFlags(Intent.FLAG_RECEIVER_FOREGROUND).
-                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP).
-                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+//                setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+//                        | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         //ПИ для api >= 26
         PendingIntent sendBroadcastMainAlarmNew = PendingIntent.getBroadcast(
                 App.getContext(),

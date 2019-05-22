@@ -9,11 +9,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import com.gauravk.audiovisualizer.visualizer.BarVisualizer;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.view.View;
 
 import com.google.android.material.navigation.NavigationView;
@@ -72,6 +75,11 @@ public class RootActivity extends AppCompatActivity
 
 
     @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         Utils.simpleLog("RootActivity onCreate Thread name : " + Thread.currentThread().getName());
         super.onCreate(savedInstanceState);
@@ -91,18 +99,25 @@ public class RootActivity extends AppCompatActivity
                 .getActionView()
                 .findViewById(R.id.alarm_switcher);
 
+        toolbar.setBackgroundColor(ContextCompat.getColor(App.getContext(),R.color.transparent));
         presenter = RootPresenter.getInstance();
         presenter.takeView(this);
-        if(getIntent().getAction() != null){
-            if (getIntent().getAction().equals(ConstantStorage.ACTION_ALARM)){
-                presenter.settingAlarm();
-            }
-        }
+
         switcher.setChecked(PrefManager.isCheckedAlarm());
         switcher.setOnCheckedChangeListener((view, isChecked) -> presenter.switchAlarm(isChecked));
         playButtonIv.setOnClickListener(v -> {
-            Utils.saveLog("Class: " + "RootActivity " + "Method: " + "onClick");
+            if (avi.getVisibility() == View.VISIBLE) return;
             presenter.clickOnPlayButton();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                try {
+                    boolean ignoringBatteryOptimizations = ((PowerManager) getSystemService(Context.POWER_SERVICE)).isIgnoringBatteryOptimizations(getPackageName());
+                    if (!ignoringBatteryOptimizations) {
+                        startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName())));
+                    }
+                } catch (Throwable e) {
+                }
+            }
         });
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -123,6 +138,16 @@ public class RootActivity extends AppCompatActivity
         playerFilter.addAction(ACTION_CLOSE);
         localBroadcastManager.registerReceiver(playerStateChangeReceiver,
                 playerFilter);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            try {
+                boolean ignoringBatteryOptimizations = ((PowerManager) getSystemService(Context.POWER_SERVICE)).isIgnoringBatteryOptimizations(getPackageName());
+                if (!ignoringBatteryOptimizations) {
+                    startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getPackageName())));
+                }
+            } catch (Throwable e) {
+            }
+        }
     }
 
     @Override
@@ -304,12 +329,16 @@ public class RootActivity extends AppCompatActivity
     @Override
     public void showPauseButton() {
         playButtonIv.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.pause));
-
     }
 
     @Override
     public void showDescribeAlarm(String text) {
         menuAlarmItem.setTitle(text);
+    }
+
+    @Override
+    public void cancelAlarm() {
+        switcher.setChecked(false);
     }
 
     @Override

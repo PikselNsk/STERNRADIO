@@ -8,29 +8,18 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.media.SubtitleData;
-import android.os.AsyncTask;
 import android.os.Binder;
-import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
-import android.os.SystemClock;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 
-import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import info.javaway.sternradio.App;
-import info.javaway.sternradio.R;
 import info.javaway.sternradio.Utils;
 import info.javaway.sternradio.handler.MusicInfoHelper;
 import info.javaway.sternradio.view.RootActivity;
@@ -225,7 +214,7 @@ public class MusicServiceStream extends Service
         mState = State.Preparing;
 
         // TODO: 23.03.2019 отправить нотификацию
-        NotificationHelper.sendNotification(
+        NotificationHelper.sendNotificationToManagment(
                 App.getContext(),
                 "",
                 0,
@@ -257,7 +246,7 @@ public class MusicServiceStream extends Service
             mMediaPlayer.start();
             sendUpdatePlayerIntent();
             mState = State.Playeng;
-            NotificationHelper.sendNotification(
+            NotificationHelper.sendNotificationToManagment(
                     App.getContext(),
                     "",
                     0,
@@ -325,7 +314,7 @@ public class MusicServiceStream extends Service
 //            sendUpdatePlayerIntent();
             mState = State.Paused;
 //            relaxResources();
-            NotificationHelper.sendNotification(
+            NotificationHelper.sendNotificationToManagment(
                     App.getContext(),
                     "",
                     0,
